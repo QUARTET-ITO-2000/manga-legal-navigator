@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-130%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.4.0-informational)
+![Tests](https://img.shields.io/badge/tests-134%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.4.1-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 适用范围与声明
@@ -162,6 +162,7 @@ git clone https://github.com/<你的账号>/manga-legal-navigator.git
 | --- | --- | --- |
 | 启用插件 | 开 | 总开关。关掉后不读取页面、不发请求、不显示卡片。 |
 | 识别到作品时自动在页面显示浮窗 | 开 | 关掉后结果只出现在 Popup 里，或点「在页面显示」才出卡片。 |
+| 用作者 / 社团名兜底搜索 | 开 | 额外用页面上的作者 / 社团名再搜一轮。部分站点（尤其 Pixiv）会把作品换成别的标题存放，只搜标题会漏掉。 |
 | 使用离线示例数据（调试用） | 关 | 用 `src/stores/fixtures/` 里的示例快照跑完整流水线，不发网络请求。 |
 | 跳过「是否漫画页」判断（调试用） | 关 | 所有页面都分析，开发新商店适配器时很有用。 |
 
@@ -257,7 +258,7 @@ manga-legal-navigator/
 ### 测试
 
 ```bash
-node --test tests/*.test.js      # 130 项，全部离线
+node --test tests/*.test.js      # 134 项，全部离线
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 检查仓库里是否混进了真实商品号 / 画廊号
 ```
@@ -338,7 +339,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * 换页期间，页面信息请求会等新内容就绪再回答，不会再拿旧内容应付；旧卡片同时立即移除。
   * 新增 `settled` 信号：`og:url` / `canonical` 与地址栏不一致时，按「还没换好」处理，绝不拿去搜索。
   * 状态里记录产生它的文档编号（`page.scriptId`）：只有同一份文档才复用缓存；后台也只在标签页仍停在原地址时才写入状态。
-* 已按上表在真机验证，回归测试 130 项。
+* 已按上表在真机验证，回归测试 134 项。
 
 **0.2.2** — 站点根路径 / 列表页不再分析；导航栏文案不再被当成「作品页」信号。
 

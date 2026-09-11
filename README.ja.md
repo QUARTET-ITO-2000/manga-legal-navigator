@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-130%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.4.0-informational)
+![Tests](https://img.shields.io/badge/tests-134%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.4.1-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 対象と免責
@@ -162,6 +162,7 @@ git clone https://github.com/<your-account>/manga-legal-navigator.git
 | --- | --- | --- |
 | 拡張機能を有効にする | オン | マスタースイッチ。オフにすると読み取りも通信もカードも行いません。 |
 | 作品を認識したらページにカードを表示 | オン | オフにすると結果はポップアップ内のみ、または「ページに表示」を押したときだけ表示されます。 |
+| 作者 / サークル名でも検索する | オン | ページの作者・サークル名でもう一度検索します。サイトによっては（特に Pixiv）別タイトルで登録されているため、タイトル検索だけでは見つかりません。 |
 | オフラインのサンプルデータを使う（デバッグ） | オフ | `src/stores/fixtures/` のサンプルスナップショットでパイプライン全体を実行します（通信なし）。 |
 | 「漫画ページかどうか」の判定をスキップ（デバッグ） | オフ | すべてのページを分析します。新しいストアアダプタの開発時に便利です。 |
 
@@ -257,7 +258,7 @@ manga-legal-navigator/
 ### テスト
 
 ```bash
-node --test tests/*.test.js      # 130 件、すべてオフライン
+node --test tests/*.test.js      # 134 件、すべてオフライン
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 実在の商品 ID / ギャラリー ID が混入していないか検査
 ```
@@ -338,7 +339,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * 遷移中はページ情報の要求に古い内容で答えず、新しい内容が揃うまで待ちます。前のページのカードもその場で取り除きます。
   * `settled` シグナルを追加: `og:url` / `canonical` がアドレスバーと食い違う場合は「切り替え中」として扱い、検索には使いません。
   * 状態にドキュメント識別子（`page.scriptId`）を持たせ、同じドキュメントのときだけキャッシュを再利用。バックグラウンドもタブが同じ URL に留まっている場合のみ状態を保存します。
-* 実サイトで検証済み（[検証](#検証)）。テストは 130 件。
+* 実サイトで検証済み（[検証](#検証)）。テストは 134 件。
 
 **0.2.2** — サイトのルート / 一覧ページを分析対象から除外。ナビゲーションの文言を「作品ページ」の根拠にしないようにしました。
 

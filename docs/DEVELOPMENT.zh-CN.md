@@ -163,7 +163,7 @@
 ## 7. 测试与自检
 
 ```bash
-# 单元测试 + 端到端流水线测试（用示例快照驱动，共 130 项）
+# 单元测试 + 端到端流水线测试（用示例快照驱动，共 134 项）
 node --test tests/*.test.js
 
 # 联网实测：验证 DLsite 的 URL 与解析是否仍然成立
@@ -286,6 +286,17 @@ extension/
 本项目假定使用者为成年人；MVP 不做年龄验证与内容审核（需求文档 §1、§3）。
 
 ## 14. 变更记录
+
+**v0.4.1**
+
+- 新增**作者兜底搜索**（可选，默认开启；Popup 里的「用作者 / 社团名兜底搜索」开关）：
+  - `cleaner.js` 新增 `extractArtistNames()`：从页面信息块里按 `Artists:` / `Groups:` / `Circles:` / `Authors:` 标签切出作者 / 社团名（过滤 `original`、`japanese`、纯数字等噪声，最多 3 个）；
+  - 适配器接口扩展为 `searchPlan(query, options)`，`options.artists` 由 pipeline 按设置注入；
+  - Pixiv 适配器在有作者名时追加 tier-2 步骤 `GET /ajax/search/users/<作者>`，把返回的用户预览作品展开成候选（`body.users.data[].illusts[]`）——这正是「标题被改过、作者没变」的作品能被找到的原因（实测：某作品在 Pixiv 上标题多了后缀，仅靠标题搜索命中不到）；
+  - 关掉开关时 `options.artists` 为空，请求数量与旧版本一致。
+- 修复缓存导致的「改了代码界面不变」：缓存键加版本前缀 `mn:search:v2:`，适配器改动 item 结构后旧缓存自动失效（此前 Pixiv 结果缺 `store` 字段、误标 `isFree`，30 分钟内一直从缓存里读出旧对象）。
+- Pixiv 结果不再声称「免费」：能打开不等于免费（可能是支援者限定或付费方案），搜索接口也不返回价格，因此价格字段留空。
+- 回归测试 134 项。
 
 **v0.4.0**
 

@@ -3,7 +3,7 @@
  * measurements (requirements doc §10 / §21).
  */
 
-export const EXTENSION_VERSION = '0.4.0';
+export const EXTENSION_VERSION = '0.4.1';
 
 export const CONFIG = {
   matcher: {
@@ -67,6 +67,12 @@ export const CONFIG = {
     enabled: true,
     /** show the floating card automatically once a work is recognised */
     autoShowCard: true,
+    /**
+     * Also search by the artist / circle name taken from the page. Some sites
+     * (Pixiv in particular) store a work under a different title, so a title
+     * search misses it while the author stays the same.
+     */
+    artistFallback: true,
     /** debug: use the bundled store snapshots instead of the network */
     mockMode: false,
     /** debug: skip the "is this a manga page?" check */

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { cleanTitle, extractWorkTitle } from '../src/lib/cleaner.js';
+import { cleanTitle, extractArtistNames, extractWorkTitle } from '../src/lib/cleaner.js';
 import { toStoreQuery } from '../src/lib/text.js';
 
 test('测试 A：标准标题「作品名称 第12话」能识别出作品名称', () => {
@@ -222,6 +222,21 @@ test('没有任何标题时返回 low 置信度且没有变体', () => {
   assert.equal(extraction.cleanedTitle, '');
   assert.equal(extraction.confidence, 'low');
   assert.deepEqual(extraction.variants, []);
+});
+
+test('从画廊信息块里抽取作者 / 社团名（作者兜底搜索用）', () => {
+  const artists = extractArtistNames({
+    infoText: 'Parodies: original Tags: group full color Artists: sample artist Languages: japanese '
+      + 'Categories: doujinshi Pages: 45 Groups: sample circle | second circle'
+  });
+  assert.deepEqual(artists, ['sample artist', 'sample circle', 'second circle']);
+});
+
+test('作者名里的噪声不会被当成作者（original / japanese / 纯数字）', () => {
+  const artists = extractArtistNames({
+    infoText: 'Tags: original Artists: original Groups: 12345 Languages: japanese Categories: doujinshi'
+  });
+  assert.deepEqual(artists, []);
 });
 
 test('结尾的「出处 / 规格」括号会被去掉（杂志号、页数、活动号）', () => {

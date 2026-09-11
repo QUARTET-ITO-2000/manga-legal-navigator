@@ -15,6 +15,7 @@ const els = {
   setAutoshow: document.getElementById('set-autoshow'),
   setMock: document.getElementById('set-mock'),
   setIgnoreFilter: document.getElementById('set-ignore-filter'),
+  setArtistFallback: document.getElementById('set-artist-fallback'),
   clearCache: document.getElementById('btn-clear-cache'),
   cacheInfo: document.getElementById('cache-info')
 };
@@ -326,6 +327,7 @@ async function loadSettings() {
     els.setAutoshow.checked = currentSettings.autoShowCard !== false;
     els.setMock.checked = Boolean(currentSettings.mockMode);
     els.setIgnoreFilter.checked = Boolean(currentSettings.ignoreSiteFilter);
+    els.setArtistFallback.checked = currentSettings.artistFallback !== false;
   }
 }
 
@@ -426,7 +428,8 @@ for (const [element, patch] of [
   [els.setEnabled, (checked) => ({ enabled: checked })],
   [els.setAutoshow, (checked) => ({ autoShowCard: checked })],
   [els.setMock, (checked) => ({ mockMode: checked })],
-  [els.setIgnoreFilter, (checked) => ({ ignoreSiteFilter: checked })]
+  [els.setIgnoreFilter, (checked) => ({ ignoreSiteFilter: checked })],
+  [els.setArtistFallback, (checked) => ({ artistFallback: checked })]
 ]) {
   element.addEventListener('change', async () => {
     const response = await send({ type: MSG.SET_SETTINGS, patch: patch(element.checked) });

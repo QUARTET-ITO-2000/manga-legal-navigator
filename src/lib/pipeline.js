@@ -90,7 +90,7 @@ function baseState(pageInfo) {
  * Returns { storeId, storeLabel, kind, best, candidates, preview, searchUrl, needsAgeCheck, errors, fromCache, itemCount }
  * kind: 'high' | 'possible' | 'none' | 'error' | 'age_check'
  */
-async function searchStore({ adapter, queries, extraction, deps }) {
+async function searchStore({ adapter, queries, extraction, deps, storeOptions = {} }) {
   const result = {
     storeId: adapter.id,
     storeLabel: adapter.label,
@@ -153,7 +153,7 @@ async function searchStore({ adapter, queries, extraction, deps }) {
     const primarySteps = [];
     const fallbackSteps = [];
     queries.forEach((query, index) => {
-      const plan = adapter.searchPlan(query);
+      const plan = adapter.searchPlan(query, storeOptions);
       primarySteps.push(...plan.filter((step) => (step.tier ?? 1) === 1));
       if (index === 0) fallbackSteps.push(...plan.filter((step) => (step.tier ?? 1) === 2));
     });
@@ -270,6 +270,13 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
   const queriesToSearch = storeQueries.length ? storeQueries : searchQueries;
   state.query.searched = queriesToSearch;
 
+  // Optional extra search by author / circle name (on by default): a work can
+  // be stored under a different title on another site, but the author is the
+  // same — stores turn these into their own "search by author" step.
+  const artists = settings.artistFallback === false ? [] : (extraction.artists || []);
+  state.query.artists = artists;
+  const storeOptions = { artists };
+
   // Ask each store in turn: stop at DLsite when it is convincing, otherwise continue to FANZA / Melonbooks
   const storeResults = [];
   let bestOverall = null;
@@ -278,7 +285,7 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
     const queries = storeId === 'dlsite'
       ? queriesToSearch
       : queriesToSearch.slice(0, Math.max(1, CONFIG.search.maxVariantsForExtraStores));
-    const result = await searchStore({ adapter: storeAdapter, queries, extraction, deps });
+    const result = await searchStore({ adapter: storeAdapter, queries, extraction, deps, storeOptions });
     storeResults.push(result);
     if (result.best && (!bestOverall || result.best.score > bestOverall.score)) bestOverall = result.best;
     if (result.kind === 'high') break;

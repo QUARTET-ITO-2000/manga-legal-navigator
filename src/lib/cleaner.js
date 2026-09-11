@@ -403,6 +403,47 @@ export function cleanTitle(rawTitle, options = {}) {
   return { rawTitle: raw, cleaned, confidence, notes, chapterHint };
 }
 
+/**
+ * Labels that appear inside a gallery info block. They mark where one field
+ * ends and the next one starts, so a value can be sliced out of the flat text.
+ */
+const INFO_LABELS = [
+  'parodies?', 'tags?', 'groups?', 'artists?', 'circles?', 'authors?', 'characters?',
+  'languages?', 'categories?', 'pages?', 'uploaded', 'favorites?'
+].join('|');
+/** Labels whose value is an artist / circle name. */
+const ARTIST_LABELS = 'artists?|circles?|groups?|authors?';
+/** Values that look like an artist name but are actually a category or a flag. */
+const NOT_AN_ARTIST = /^(?:original|japanese|english|chinese|translated|doujinshi|manga|various|none|unknown|full[- ]?color)$/i;
+
+/**
+ * Artist / circle names taken from the page's info block (`Artists: …`,
+ * `Groups: …`).
+ *
+ * This is the fallback search term: a work can be stored under a *different*
+ * title on another site (Pixiv often renames it), but the author usually stays
+ * the same, so searching by author is what finds those works.
+ */
+export function extractArtistNames(pageInfo = {}) {
+  const infoText = String(pageInfo.infoText || '');
+  if (!infoText) return [];
+  const pattern = new RegExp(
+    `(?:${ARTIST_LABELS})\\s*[:：]\\s*([\\s\\S]*?)(?=\\s*(?:${INFO_LABELS})\\s*[:：]|$)`,
+    'gi'
+  );
+  const out = [];
+  for (const match of infoText.matchAll(pattern)) {
+    for (const part of String(match[1]).split(/[|｜/／、,，;；]\s*/)) {
+      const name = collapseSpaces(part).replace(/^#+/, '').replace(/[（(].*$/, '').trim();
+      if (name.length < 2 || name.length > 40) continue;
+      if (NOT_AN_ARTIST.test(name) || /^\d+$/.test(name)) continue;
+      if (out.some((item) => item.toLowerCase() === name.toLowerCase())) continue;
+      out.push(name);
+    }
+  }
+  return out.slice(0, 3);
+}
+
 /** Gather every usable title source on the page (requirements doc §6 priority order) */
 export function collectTitleSources(pageInfo = {}) {
   const headings = (key, weight, limit = 3) => (Array.isArray(pageInfo[key]) ? pageInfo[key] : [pageInfo[key]])
@@ -458,7 +499,8 @@ export function extractWorkTitle(pageInfo = {}) {
   if (!sources.length) {
     return {
       rawTitle: '', source: null, cleanedTitle: '', confidence: 'low',
-      notes: ['no-title'], chapterHint: null, variants: [], sources: []
+      notes: ['no-title'], chapterHint: null, variants: [], sources: [],
+      artists: extractArtistNames(pageInfo)
     };
   }
 
@@ -515,6 +557,7 @@ export function extractWorkTitle(pageInfo = {}) {
     notes: primary.notes,
     chapterHint: primary.chapterHint,
     variants: limited,
+    artists: extractArtistNames(pageInfo),
     sources: sources.map(({ source, rawTitle, cleaned, confidence, score }) => ({
       source, rawTitle, cleaned, confidence, score
     }))

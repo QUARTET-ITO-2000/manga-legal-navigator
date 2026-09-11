@@ -52,14 +52,34 @@ export class PixivAdapter extends StoreAdapter {
     return `${PIXIV_ORIGIN}/search.php?word=${encodeKeyword(query)}&order=date_d&s_mode=s_tag`;
   }
 
-  searchPlan(query) {
-    return SEARCH_MODES.map((mode) => ({
+  /** Artist search: returns the matching users plus a preview of their works. */
+  buildUserSearchUrl(query) {
+    const encoded = encodeKeyword(query);
+    return `${PIXIV_ORIGIN}/ajax/search/users/${encoded}?word=${encoded}&p=1&lang=ja`;
+  }
+
+  searchPlan(query, options = {}) {
+    const steps = SEARCH_MODES.map((mode) => ({
       id: mode.id,
       tier: mode.tier,
       label: `${this.label} (${mode.id})`,
       url: this.buildSearchUrl(query, { sMode: mode.sMode }),
       query
     }));
+    // Artist fallback (optional, on by default): Pixiv often stores a work under
+    // a different title than the doujinshi site, but the author stays the same.
+    const artists = Array.isArray(options.artists) ? options.artists.slice(0, 2) : [];
+    for (const artist of artists) {
+      steps.push({
+        id: `artist:${artist}`,
+        kind: 'artist',
+        tier: 2,
+        label: `${this.label} (artist)`,
+        url: this.buildUserSearchUrl(artist),
+        query: artist
+      });
+    }
+    return steps;
   }
 
   parseResults(text, ctx = {}) {
@@ -75,31 +95,13 @@ export class PixivAdapter extends StoreAdapter {
       return { ...base, reason: payload?.message ? 'blocked' : 'unexpected-payload' };
     }
 
+    if (ctx.kind === 'artist') return this.parseArtistResults(payload, ctx);
+
     const block = payload.body?.illustManga || payload.body?.manga;
     if (!block || !Array.isArray(block.data)) return base;
     const total = Number(block.total) || 0;
 
-    const items = block.data
-      .filter((entry) => entry && entry.id)
-      .map((entry) => ({
-        productId: String(entry.id),
-        store: 'pixiv',
-        title: String(entry.title || '').trim(),
-        url: `${PIXIV_ORIGIN}/artworks/${entry.id}`,
-        author: String(entry.userName || '').trim(),
-        maker: String(entry.userName || '').trim(),
-        imageUrl: String(entry.url || ''),
-        // Being able to open a work on Pixiv does not mean it is free: posts can
-        // be supporters-only or behind a paid plan, and the search API does not
-        // expose a price. So no price is claimed at all.
-        isFree: false,
-        price: null,
-        priceText: '',
-        category: 'pixiv',
-        /** 0 = all ages, 1 = R-18, 2 = R-18G */
-        ageRating: Number(entry.xRestrict) || 0
-      }))
-      .filter((item) => item.title);
+    const items = block.data.filter((entry) => entry && entry.id).map((entry) => toItem(entry, entry.userName));
 
     if (!items.length) {
       return {
@@ -111,6 +113,45 @@ export class PixivAdapter extends StoreAdapter {
     }
     return { ok: true, reason: 'ok', items, total, step: ctx.id };
   }
+
+  /**
+   * Results of an artist search: each user carries a preview list of their
+   * works (`illusts`), which is enough to match a title against.
+   */
+  parseArtistResults(payload, ctx = {}) {
+    const base = { ok: false, reason: 'no-items-parsed', items: [], step: ctx.id };
+    const users = payload.body?.users?.data;
+    if (!Array.isArray(users)) return base;
+    const items = users.flatMap((user) => (Array.isArray(user?.illusts) ? user.illusts : [])
+      .filter((work) => work && work.id)
+      .map((work) => toItem(work, user.userName)));
+    // A user without a visible works preview is not an error: it just means we
+    // have nothing to match against.
+    if (!items.length) return { ...base, ok: true, reason: 'not-found' };
+    return { ok: true, reason: 'ok', items, total: items.length, step: ctx.id };
+  }
 }
 
 export { encodeKeyword as encodePixivKeyword };
+
+/** Map one Pixiv work (from either search shape) to a store item. */
+function toItem(entry, userName) {
+  return {
+    productId: String(entry.id),
+    store: 'pixiv',
+    title: String(entry.title || '').trim(),
+    url: `${PIXIV_ORIGIN}/artworks/${entry.id}`,
+    author: String(entry.userName || userName || '').trim(),
+    maker: String(entry.userName || userName || '').trim(),
+    imageUrl: String(entry.url || ''),
+    // Being able to open a work on Pixiv does not mean it is free: posts can be
+    // supporters-only or behind a paid plan, and the search API exposes no
+    // price — so no price is claimed at all.
+    isFree: false,
+    price: null,
+    priceText: '',
+    category: 'pixiv',
+    /** 0 = all ages, 1 = R-18, 2 = R-18G */
+    ageRating: Number(entry.xRestrict) || 0
+  };
+}

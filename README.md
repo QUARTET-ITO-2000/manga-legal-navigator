@@ -10,8 +10,8 @@ If the match is not convincing, it says **“no matching product found”** and 
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-130%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.4.0-informational)
+![Tests](https://img.shields.io/badge/tests-134%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.4.1-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### Scope and disclaimer
@@ -162,6 +162,7 @@ Optional: in the extension details page, enable **Allow access to file URLs** if
 | --- | --- | --- |
 | Enable extension | on | Master switch. Off = no reading, no requests, no card. |
 | Show the card automatically | on | When off, results only appear in the popup / when you press “Show on page”. |
+| Search by author / circle as well | on | Adds a second search using the artist / circle name from the page. Some sites (Pixiv in particular) store a work under a different title, so the title search alone misses it. |
 | Use offline sample data (debug) | off | Runs the whole pipeline against the sample HTML snapshots in `src/stores/fixtures/` — no network requests. |
 | Skip the “is this a manga page?” check (debug) | off | Analyses every page, useful when developing a new site adapter. |
 
@@ -257,7 +258,7 @@ manga-legal-navigator/
 ### Tests
 
 ```bash
-node --test tests/*.test.js      # 130 tests, no network required
+node --test tests/*.test.js      # 134 tests, no network required
 npm test                         # same thing
 node tools/lint-anonymity.mjs    # fails if a real store/gallery identifier slipped in
 ```
@@ -349,7 +350,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * While the page is settling, page-info requests wait for the new content instead of answering with the old one, and the previous card is removed immediately.
   * New `settled` signal: when `og:url` / `canonical` disagree with the address bar, the page is treated as “still switching” and is never searched.
   * States now carry the id of the document that produced them (`page.scriptId`); the popup reuses a cached state only for the same document, and the background only stores a state if the tab is still on that URL.
-* Verified by hand against live pages (see [Verification](#verification)) and covered by 130 tests.
+* Verified by hand against live pages (see [Verification](#verification)) and covered by 134 tests.
 
 **0.2.2** — site root / listing pages are no longer analysed; navigation-bar text no longer counts as a “work page” signal.
 
