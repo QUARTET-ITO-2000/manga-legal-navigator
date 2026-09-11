@@ -434,7 +434,14 @@ export function extractArtistNames(pageInfo = {}) {
   const out = [];
   for (const match of infoText.matchAll(pattern)) {
     for (const part of String(match[1]).split(/[|｜/／、,，;；]\s*/)) {
-      const name = collapseSpaces(part).replace(/^#+/, '').replace(/[（(].*$/, '').trim();
+      const name = collapseSpaces(part)
+        .replace(/^#+/, '')
+        .replace(/[（(].*$/, '')
+        // Gallery sites append a number to disambiguate identical artist slugs
+        // ("ra-men 171" for ra-men), which would make the name unsearchable on
+        // other sites — drop it.
+        .replace(/\s+\d{1,4}$/, '')
+        .trim();
       if (name.length < 2 || name.length > 40) continue;
       if (NOT_AN_ARTIST.test(name) || /^\d+$/.test(name)) continue;
       if (out.some((item) => item.toLowerCase() === name.toLowerCase())) continue;

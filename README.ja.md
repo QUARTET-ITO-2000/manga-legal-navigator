@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-141%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.5.1-informational)
+![Tests](https://img.shields.io/badge/tests-142%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.5.2-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 対象と免責
@@ -259,7 +259,7 @@ manga-legal-navigator/
 ### テスト
 
 ```bash
-node --test tests/*.test.js      # 141 件、すべてオフライン
+node --test tests/*.test.js      # 142 件、すべてオフライン
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 実在の商品 ID / ギャラリー ID が混入していないか検査
 ```
@@ -340,7 +340,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * 遷移中はページ情報の要求に古い内容で答えず、新しい内容が揃うまで待ちます。前のページのカードもその場で取り除きます。
   * `settled` シグナルを追加: `og:url` / `canonical` がアドレスバーと食い違う場合は「切り替え中」として扱い、検索には使いません。
   * 状態にドキュメント識別子（`page.scriptId`）を持たせ、同じドキュメントのときだけキャッシュを再利用。バックグラウンドもタブが同じ URL に留まっている場合のみ状態を保存します。
-* 実サイトで検証済み（[検証](#検証)）。テストは 141 件。
+* 実サイトで検証済み（[検証](#検証)）。テストは 142 件。
 
 **0.2.2** — サイトのルート / 一覧ページを分析対象から除外。ナビゲーションの文言を「作品ページ」の根拠にしないようにしました。
 

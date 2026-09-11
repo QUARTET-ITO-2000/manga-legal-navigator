@@ -239,6 +239,13 @@ test('作者名里的噪声不会被当成作者（original / japanese / 纯数�
   assert.deepEqual(artists, []);
 });
 
+test('作者名结尾的消歧数字会被去掉（ra-men 171 → ra-men）', () => {
+  const artists = extractArtistNames({
+    infoText: 'Artists: ra-men 171 Languages: japanese Categories: doujinshi Pages: 45'
+  });
+  assert.deepEqual(artists, ['ra-men']);
+});
+
 test('结尾的「出处 / 规格」括号会被去掉（杂志号、页数、活动号）', () => {
   // Gallery titles often name the magazine issue a chapter ran in. Keeping that
   // bracket made the store keyword return 0 results.

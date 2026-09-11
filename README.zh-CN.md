@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-141%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.5.1-informational)
+![Tests](https://img.shields.io/badge/tests-142%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.5.2-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 适用范围与声明
@@ -259,7 +259,7 @@ manga-legal-navigator/
 ### 测试
 
 ```bash
-node --test tests/*.test.js      # 141 项，全部离线
+node --test tests/*.test.js      # 142 项，全部离线
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 检查仓库里是否混进了真实商品号 / 画廊号
 ```
@@ -340,7 +340,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * 换页期间，页面信息请求会等新内容就绪再回答，不会再拿旧内容应付；旧卡片同时立即移除。
   * 新增 `settled` 信号：`og:url` / `canonical` 与地址栏不一致时，按「还没换好」处理，绝不拿去搜索。
   * 状态里记录产生它的文档编号（`page.scriptId`）：只有同一份文档才复用缓存；后台也只在标签页仍停在原地址时才写入状态。
-* 已按上表在真机验证，回归测试 141 项。
+* 已按上表在真机验证，回归测试 142 项。
 
 **0.2.2** — 站点根路径 / 列表页不再分析；导航栏文案不再被当成「作品页」信号。
 
