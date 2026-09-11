@@ -40,7 +40,7 @@ test('测试 F：普通博客 / 文档页面不会被分析', () => {
 
 test('测试 F：搜索引擎结果页不会被分析', () => {
   const result = evaluatePage({
-    url: 'https://www.google.com/search?q=%E6%BC%AB%E7%94%BB',
+    url: 'https://www.google.com/search?q=%E3%82%B5%E3%83%B3%E3%83%97%E3%83%AB', // anonymity-lint: allow (percent-encoded placeholder word)
     host: 'www.google.com',
     title: '漫画 - Google 搜索'
   });

@@ -277,6 +277,11 @@ extension/
 - `package.json` 里的 `"type": "module"` 只影响 Node 运行测试的方式，Chrome 不读取它。
 - 修改阈值后请重跑 `node --test tests/*.test.js`，再用 `tools/probe-dlsite.mjs` 在真实数据上抽查。
 - 对照真实页面：跑 `node tools/probe-dlsite.mjs "<关键词>" --raw` 看真实 HTML。**抓下来的真实页面请放到 `src/stores/fixtures/local/`（已 gitignore），不要提交**；要进仓库的快照必须是示例数据——结构与真实页面一致，但商品名 / 商品 ID / 社团名 / 图片地址都替换成占位值。
+- **提交前先跑 `node tools/lint-anonymity.mjs`**：它会检查「已跟踪 + 未跟踪但没被 gitignore」的所有文件里的「标识符形态」——商店商品号（`RJ…` / `BJ…` / `d_…`）、`product_id=` 参数、画廊路径 `/g/000123/`、以及百分号编码的日文（真实标题最常见的漏网方式）。默认也会扫还没提交的新文件——上一次正是因为只扫已跟踪文件，刚写的新文件才漏检。
+  - `tools/anonymity-allowlist.txt`（已提交）：允许出现的占位 ID 清单；
+  - `docs/forbidden-names.local.txt`（已 gitignore）：**放真实作品名/社团名，一行一个**，命中即报错。这样检查脚本本身不含任何真实名字，同时又能防住旧错误复发；
+  - `--cjk` 会额外打印注释 / markdown / 测试数据里的日文片段，方便人工复核示例是不是真名；
+  - 某行含 `anonymity-lint: allow` 时跳过形态检查（用于百分号编码的占位串），但本地 denylist 仍然生效。
 
 本项目假定使用者为成年人；MVP 不做年龄验证与内容审核（需求文档 §1、§3）。
 

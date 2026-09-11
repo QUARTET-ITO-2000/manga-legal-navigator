@@ -18,7 +18,7 @@ const notFoundHtml = readFileSync(new URL('../src/stores/fixtures/dlsite-not-fou
 test('搜索 URL：空格必须编码成 +（%20 会被 DLsite 返回 403）', () => {
   const url = adapter.buildSearchUrl('作品名称 第12話');
   assert.ok(!url.includes('%20'), `URL 里不应出现 %20：${url}`);
-  assert.ok(url.includes('%E4%BD%9C%E5%93%81%E5%90%8D%E7%A7%B0+%E7%AC%AC12'), url);
+  assert.ok(url.includes('%E4%BD%9C%E5%93%81%E5%90%8D%E7%A7%B0+%E7%AC%AC12'), url); // anonymity-lint: allow (percent-encoded placeholder title)
   assert.ok(url.startsWith('https://www.dlsite.com/books/fsr/=/language/jp/keyword/'));
   assert.equal(encodeKeyword('a b'), 'a+b');
 });

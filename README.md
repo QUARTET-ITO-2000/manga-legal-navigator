@@ -258,9 +258,21 @@ manga-legal-navigator/
 ```bash
 node --test tests/*.test.js      # 117 tests, no network required
 npm test                         # same thing
+node tools/lint-anonymity.mjs    # fails if a real store/gallery identifier slipped in
 ```
 
 Coverage: title cleaning (including counter-examples that must **not** be over-cleaned), matching thresholds, site filtering, store parsers against the HTML snapshots, the end-to-end pipeline, the card templates, the popup, and the client-side-navigation gate (`tests/content-nav.test.js`).
+
+### Keeping the repository anonymised
+
+This project must not publish third-party identifiers (work titles, circle names, product ids, gallery ids), so `tools/lint-anonymity.mjs` checks every file that is — or is about to become — part of the repository (tracked plus untracked files that are not git-ignored) for identifier *shapes*: store product ids, `product_id=` parameters, gallery paths and percent-encoded text. Run it before pushing.
+
+Two lists drive it, and neither contains a real name:
+
+* `tools/anonymity-allowlist.txt` — placeholder ids that are fine to use (`RJ00000001`, `/g/000123`, …).
+* `docs/forbidden-names.local.txt` — optional, **git-ignored**: put the real names you are checking for here, one per line, and the lint fails whenever one appears anywhere in the repository.
+
+`node tools/lint-anonymity.mjs --cjk` additionally prints the CJK text found in comments, markdown and test data, which is a quick way to review whether an example is still a real title. A line containing `anonymity-lint: allow` skips the shape checks for that line (used for percent-encoded placeholder strings); the local denylist still applies.
 
 ### Probes against the live stores
 

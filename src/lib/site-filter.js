@@ -113,7 +113,7 @@ export function evaluatePage(pageInfo, settings = {}) {
   if (signals.some((signal) => strongSignals.includes(signal))) {
     return { ...result, allowed: true, reason: 'strong-signal' };
   }
-  // A manga-like host plus a detail-style URL (such as /g/12345/) counts as a
+  // A manga-like host plus a detail-style URL (such as /g/000123/) counts as a
   // work page; home pages and listing pages do not show a card
   if (hostHint && detailUrl) {
     return { ...result, allowed: true, reason: 'manga-host-detail-url' };

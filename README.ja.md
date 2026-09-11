@@ -258,6 +258,7 @@ manga-legal-navigator/
 ```bash
 node --test tests/*.test.js      # 117 件、すべてオフライン
 npm test                         # 同上
+node tools/lint-anonymity.mjs    # 実在の商品 ID / ギャラリー ID が混入していないか検査
 ```
 
 範囲: タイトル整形（過剰に削らないことを確認する反例つき）、マッチングのしきい値、ページ判定、ストアのパーサ（HTML スナップショット）、パイプライン全体、カードのテンプレート、ポップアップ、そしてクライアントサイド遷移ゲート（`tests/content-nav.test.js`）。

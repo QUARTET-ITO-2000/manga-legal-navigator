@@ -258,6 +258,7 @@ manga-legal-navigator/
 ```bash
 node --test tests/*.test.js      # 117 项，全部离线
 npm test                         # 同上
+node tools/lint-anonymity.mjs    # 检查仓库里是否混进了真实商品号 / 画廊号
 ```
 
 覆盖范围：标题清洗（含「不该被过度清洗」的反例）、匹配阈值、站点判断、商店解析（HTML 快照）、端到端流水线、卡片模板、Popup，以及站内跳转闸门（`tests/content-nav.test.js`）。

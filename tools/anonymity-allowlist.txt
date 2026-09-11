@@ -1,0 +1,23 @@
+# Placeholder identifiers that are allowed to appear in this repository.
+# Everything else that looks like a store product id or a gallery id is
+# reported by tools/lint-anonymity.mjs.
+#
+# Store product ids used by the sample snapshots.
+RJ00000001
+RJ00000002
+RJ00000003
+RJ00000004
+RJ00000005
+RJ00000006
+RJ00000007
+RJ00000008
+BJ000000
+d_00000001
+#
+# Melonbooks-style product id used by the sample snapshot.
+1000001
+#
+# Gallery paths used by the tests.
+/g/000123
+/g/000456
+/g/000789

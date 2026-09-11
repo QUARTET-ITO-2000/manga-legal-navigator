@@ -19,3 +19,6 @@ docs/VERIFICATION.local.md
 # 本机抓取的真实页面快照（含真实商品名），只留本地、不上传
 src/stores/fixtures/local/
 *.real.html
+
+# 本机维护的真实作品名清单（供 tools/lint-anonymity.mjs 使用），不上传
+docs/forbidden-names.local.txt
