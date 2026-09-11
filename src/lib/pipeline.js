@@ -20,7 +20,8 @@ const STORE_LABELS = {
   dlsite: 'DLsite',
   fanza: 'FANZA',
   melonbooks: 'Melonbooks',
-  pixiv: 'Pixiv'
+  pixiv: 'Pixiv',
+  fantia: 'Fantia'
 };
 
 function toCandidateCard(item) {

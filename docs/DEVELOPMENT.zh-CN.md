@@ -163,7 +163,7 @@
 ## 7. 测试与自检
 
 ```bash
-# 单元测试 + 端到端流水线测试（用示例快照驱动，共 134 项）
+# 单元测试 + 端到端流水线测试（用示例快照驱动，共 142 项）
 node --test tests/*.test.js
 
 # 联网实测：验证 DLsite 的 URL 与解析是否仍然成立
@@ -286,6 +286,18 @@ extension/
 本项目假定使用者为成年人；MVP 不做年龄验证与内容审核（需求文档 §1、§3）。
 
 ## 14. 变更记录
+
+**v0.5.0**
+
+- 新增 **Fantia** 适配器（`src/stores/fantia.js`；检索顺序：DLsite → FANZA → Melonbooks → Pixiv → Fantia）：
+  - **实测（2026-09）**：`GET https://fantia.jp/api/v1/search/posts?q=<词>` 返回 200 + JSON `{"posts":[{"id":…,"title":…}]}`，是公开接口；文章页 `https://fantia.jp/posts/<id>` 未登录也能 200；Fantia **没有** HTML 搜索页（`/search?q=` 是 404），所以 API 是唯一入口。与 Fanbox 不同，不需要私有代理和会话 token。
+  - 解析 `posts[]` → 文章页链接 `https://fantia.jp/posts/<id>`、标题、社团（`fanclub.name`）；Fantia 的内容可能是免费或支援者限定，接口不返回价格，因此不标「免费」也不显示价格。
+  - 年龄确认：请求带 `credentials: 'include'` 复用浏览器会话；若拿到的是年龄确认页（HTML 里含 `age_check` / `年齢確認` / `18歳以上`），标记为 `age-check` 并给出确认入口，**不会当成「没有结果」**；其它 HTML 响应按 `blocked`、非 JSON 按 `invalid-json` 处理。
+  - `manifest.json` 新增 `https://fantia.jp/*`；离线示例数据新增 `fantia-search-sample.json`。
+- 作者兜底改为**手动入口**（承接 v0.4.2）：Pixiv 的用户搜索接口只返回少量作品预览，因此不再由插件搜作者，而是在卡片 / Popup 的链接区提供 `Pixiv 作者: <名字>` 按钮（`https://www.pixiv.net/search/users?word=<名字>`）。开关仍由「用作者 / 社团名兜底搜索」控制，默认开。
+- 正版商店页面不再被抓取：`DENY_HOSTS` 补上 `dmm.co.jp`、`melonbooks.co.jp`、`pixiv.net`、`fanbox.cc`、`fantia.jp`。
+- hitomi 式 `/doujinshi/<slug>-<语言>-<id>.html` 详情页现在会被识别为作品页（详情页 URL 规则新增 `doujinshi`）。
+- 回归测试 142 项。
 
 **v0.4.1**
 

@@ -8,13 +8,15 @@ import { DLsiteAdapter } from './dlsite.js';
 import { FanzaAdapter } from './fanza.js';
 import { MelonbooksAdapter } from './melonbooks.js';
 import { PixivAdapter } from './pixiv.js';
+import { FantiaAdapter } from './fantia.js';
 
 /** Search order: DLsite first (largest Japanese catalogue), then FANZA / Melonbooks when nothing is convincing */
 const factories = new Map([
   ['dlsite', () => new DLsiteAdapter()],
   ['fanza', () => new FanzaAdapter()],
   ['melonbooks', () => new MelonbooksAdapter()],
-  ['pixiv', () => new PixivAdapter()]
+  ['pixiv', () => new PixivAdapter()],
+  ['fantia', () => new FantiaAdapter()]
 ]);
 
 const instances = new Map();

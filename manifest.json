@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "漫画正版导航（DLsite）",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "在漫画网页上自动识别作品名，并帮你找到 DLsite 上的正版商品与价格。",
   "minimum_chrome_version": "102",
   "permissions": ["storage", "activeTab"],
@@ -9,7 +9,8 @@
     "https://www.dlsite.com/*",
     "https://www.dmm.co.jp/*",
     "https://www.melonbooks.co.jp/*",
-    "https://www.pixiv.net/*"
+    "https://www.pixiv.net/*",
+    "https://fantia.jp/*"
   ],
   "background": {
     "service_worker": "src/background/service-worker.js",

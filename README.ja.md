@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-136%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.4.2-informational)
+![Tests](https://img.shields.io/badge/tests-142%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.5.0-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 対象と免責
@@ -116,6 +116,7 @@ chrome API の境界より上はすべて純粋関数なので、パイプライ
 | **FANZA**（DMM） | `https://www.dmm.co.jp/search/=/searchstr/<キーワード>/` | `/-/detail/=/cid=d_XXXXXX/` + `p.text-sm.font-bold` + `770円` + `サークル：…` | 年齢確認 Cookie が必要（下記） |
 | **Melonbooks** | `https://www.melonbooks.co.jp/search/search.php?name=<キーワード>&adult_check_flg=1` | `li.product_NNNNNNN` + `p.item-ttl.product_title` + `p.item-price` | Cookie 不要 |
 | **Pixiv** | `https://www.pixiv.net/ajax/search/artworks/<キーワード>?…&s_mode=s_tag`（JSON） | `body.illustManga.data[]` → `id` / `title` / `userName` / `xRestrict` | ブラウザの Pixiv セッションを再利用。**R-18 作品はログイン＋年齢確認をしないと検索に出ません** |
+| **Fantia** | `https://fantia.jp/api/v1/search/posts?q=<キーワード>`（JSON） | `posts[]` → `id` / `title` / `fanclub.name` | 公開 JSON API。成人向けは年齢確認が必要な場合があるためブラウザのセッションを再利用します |
 
 ### FANZA と年齢確認
 
@@ -258,7 +259,7 @@ manga-legal-navigator/
 ### テスト
 
 ```bash
-node --test tests/*.test.js      # 134 件、すべてオフライン
+node --test tests/*.test.js      # 142 件、すべてオフライン
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 実在の商品 ID / ギャラリー ID が混入していないか検査
 ```
@@ -339,7 +340,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * 遷移中はページ情報の要求に古い内容で答えず、新しい内容が揃うまで待ちます。前のページのカードもその場で取り除きます。
   * `settled` シグナルを追加: `og:url` / `canonical` がアドレスバーと食い違う場合は「切り替え中」として扱い、検索には使いません。
   * 状態にドキュメント識別子（`page.scriptId`）を持たせ、同じドキュメントのときだけキャッシュを再利用。バックグラウンドもタブが同じ URL に留まっている場合のみ状態を保存します。
-* 実サイトで検証済み（[検証](#検証)）。テストは 134 件。
+* 実サイトで検証済み（[検証](#検証)）。テストは 142 件。
 
 **0.2.2** — サイトのルート / 一覧ページを分析対象から除外。ナビゲーションの文言を「作品ページ」の根拠にしないようにしました。
 

@@ -23,7 +23,8 @@ const MOCK_FIXTURES = {
   dlsiteOther: 'src/stores/fixtures/dlsite-not-found-sample.html',
   fanza: 'src/stores/fixtures/fanza-search-sample.html',
   melonbooks: 'src/stores/fixtures/melonbooks-search-sample.html',
-  pixiv: 'src/stores/fixtures/pixiv-search-sample.json'
+  pixiv: 'src/stores/fixtures/pixiv-search-sample.json',
+  fantia: 'src/stores/fixtures/fantia-search-sample.json'
 };
 
 async function politeFetchText(url, { timeoutMs = CONFIG.search.timeoutMs, credentials = 'omit' } = {}) {
@@ -57,6 +58,7 @@ async function mockFetchText(url) {
   if (/dmm\.co\.jp/.test(url)) path = MOCK_FIXTURES.fanza;
   else if (/melonbooks\.co\.jp/.test(url)) path = MOCK_FIXTURES.melonbooks;
   else if (/pixiv\.net/.test(url)) path = MOCK_FIXTURES.pixiv;
+  else if (/fantia\.jp/.test(url)) path = MOCK_FIXTURES.fantia;
   else if (/\/girls\/fsr\//.test(url)) path = MOCK_FIXTURES.dlsiteOther;
   const response = await fetch(chrome.runtime.getURL(path));
   const text = await response.text();
