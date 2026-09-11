@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Node (only used to run the test suite; this project has no runtime deps)
+node_modules/
+npm-debug.log*
+
+# Release archives are built locally / attached to GitHub Releases
+*.zip
+
+# Editors
+.vscode/
+.idea/
+
+# 本机个人记录：含具体作品名 / 商品 ID / 商店链接，只留本地、不上传
+docs/VERIFICATION.local.md
+*.local.md
+
+# 本机抓取的真实页面快照（含真实商品名），只留本地、不上传
+src/stores/fixtures/local/
+*.real.html

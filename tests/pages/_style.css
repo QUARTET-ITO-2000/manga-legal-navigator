@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans", sans-serif;
+  color: #1f2937;
+  background: #f8fafc;
+}
+
+.site {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #1e293b;
+  color: #fff;
+}
+
+.logo { font-weight: 700; }
+.site a { color: #cbd5e1; text-decoration: none; font-size: 13px; }
+
+.reader { max-width: 720px; margin: 0 auto; padding: 24px 20px 80px; }
+.work-title { font-size: 22px; margin: 0 0 4px; }
+.chapter { color: #64748b; margin: 0 0 16px; }
+
+.expect {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #9a3412;
+}
+
+.pages img {
+  display: block;
+  width: 100%;
+  height: 160px;
+  margin-bottom: 10px;
+  background: repeating-linear-gradient(45deg, #e2e8f0, #e2e8f0 12px, #eef2f7 12px, #eef2f7 24px);
+  border-radius: 6px;
+}
+
+.chapter-nav { display: flex; gap: 16px; margin-top: 16px; }
+.chapter-nav a { color: #2563eb; text-decoration: none; }
+
+/* NOTE: these test pages are opened via file://, which requires "Allow access to file URLs" in the extension details page */

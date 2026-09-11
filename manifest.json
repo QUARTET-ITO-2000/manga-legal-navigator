@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "漫画正版导航（DLsite）",
+  "version": "0.3.0",
+  "description": "在漫画网页上自动识别作品名，并帮你找到 DLsite 上的正版商品与价格。",
+  "minimum_chrome_version": "102",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://www.dlsite.com/*",
+    "https://www.dmm.co.jp/*",
+    "https://www.melonbooks.co.jp/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*", "file:///*"],
+      "js": [
+        "src/content/extractor.js",
+        "src/content/ui.js",
+        "src/content/content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "漫画正版导航",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["src/stores/fixtures/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

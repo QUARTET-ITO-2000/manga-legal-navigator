@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>漫画正版导航</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="app-head">
+      <div class="app-title">
+        <span class="app-ico">📚</span>
+        <div>
+          <h1>漫画正版导航</h1>
+          <p class="app-sub" id="version">DLsite · v0.1.0</p>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="panel" id="page-panel">
+        <h2 class="label">当前页面</h2>
+        <p class="page-title" id="page-title">读取中…</p>
+        <p class="page-host" id="page-host"></p>
+      </section>
+
+      <section class="panel" id="result-panel">
+        <h2 class="label">识别结果</h2>
+        <div id="result-body" class="result-body">
+          <p class="muted">正在识别…</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="label">设置</h2>
+        <label class="switch">
+          <input type="checkbox" id="set-enabled" />
+          <span>启用插件</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="set-autoshow" />
+          <span>识别到作品时自动在页面显示浮窗</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="set-mock" />
+          <span>使用离线示例数据（调试用，不发网络请求）</span>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="set-ignore-filter" />
+          <span>跳过「是否漫画页」判断（调试用）</span>
+        </label>
+        <div class="row">
+          <button class="btn ghost" id="btn-clear-cache">清除搜索缓存</button>
+          <span class="muted" id="cache-info"></span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-foot">
+      <p>只在本地处理当前页面信息，搜索结果缓存在本机；不建立账号、不上传浏览记录。</p>
+      <p>插件只读取公开页面并跳转正版商品，不会自动登录或自动购买。</p>
+    </footer>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

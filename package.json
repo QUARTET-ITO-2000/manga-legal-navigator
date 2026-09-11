@@ -1,0 +1,11 @@
+{
+  "name": "manga-dlsite-navigator",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "漫画正版导航（DLsite）浏览器扩展 · MVP v0.1",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "probe": "node tools/probe-dlsite.mjs"
+  }
+}
