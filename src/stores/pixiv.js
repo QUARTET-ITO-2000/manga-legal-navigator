@@ -83,6 +83,7 @@ export class PixivAdapter extends StoreAdapter {
       .filter((entry) => entry && entry.id)
       .map((entry) => ({
         productId: String(entry.id),
+        store: 'pixiv',
         title: String(entry.title || '').trim(),
         url: `${PIXIV_ORIGIN}/artworks/${entry.id}`,
         author: String(entry.userName || '').trim(),

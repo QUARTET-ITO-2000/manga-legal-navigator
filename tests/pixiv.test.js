@@ -31,6 +31,7 @@ test('Pixiv：解析搜索结果（标题 / 作者 / 作品页链接 / 年龄分
   assert.equal(result.items.length, 3);
   const first = result.items[0];
   assert.equal(first.productId, '10000001');
+  assert.equal(first.store, 'pixiv');
   assert.equal(first.title, 'サンプル作品ピクシブ 第1話');
   assert.equal(first.url, 'https://www.pixiv.net/artworks/10000001');
   assert.equal(first.author, 'サンプル作者ピー');
