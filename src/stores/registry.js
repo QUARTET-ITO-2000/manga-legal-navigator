@@ -7,12 +7,14 @@
 import { DLsiteAdapter } from './dlsite.js';
 import { FanzaAdapter } from './fanza.js';
 import { MelonbooksAdapter } from './melonbooks.js';
+import { PixivAdapter } from './pixiv.js';
 
 /** Search order: DLsite first (largest Japanese catalogue), then FANZA / Melonbooks when nothing is convincing */
 const factories = new Map([
   ['dlsite', () => new DLsiteAdapter()],
   ['fanza', () => new FanzaAdapter()],
-  ['melonbooks', () => new MelonbooksAdapter()]
+  ['melonbooks', () => new MelonbooksAdapter()],
+  ['pixiv', () => new PixivAdapter()]
 ]);
 
 const instances = new Map();

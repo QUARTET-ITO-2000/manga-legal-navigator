@@ -10,8 +10,8 @@ If the match is not convincing, it says **“no matching product found”** and 
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-117%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.3.1-informational)
+![Tests](https://img.shields.io/badge/tests-130%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.4.0-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### Scope and disclaimer
@@ -115,6 +115,7 @@ Everything above the chrome-API boundary is pure functions, so the whole pipelin
 | **DLsite** | `https://www.dlsite.com/<section>/fsr/=/language/jp/keyword/<kw>/` | `li[data-list_item_product_id]` + `dd.work_name` / `dd.work_price_wrap` | spaces in the keyword **must** be `+`; `%20` is rejected with HTTP 403 |
 | **FANZA** (DMM) | `https://www.dmm.co.jp/search/=/searchstr/<kw>/` | `/-/detail/=/cid=d_XXXXXX/` + `p.text-sm.font-bold` + `770円` + `サークル：…` | needs the age-check cookie — see below |
 | **Melonbooks** | `https://www.melonbooks.co.jp/search/search.php?name=<kw>&adult_check_flg=1` | `li.product_NNNNNNN` + `p.item-ttl.product_title` + `p.item-price` | no cookie needed |
+| **Pixiv** | `https://www.pixiv.net/ajax/search/artworks/<kw>?…&s_mode=s_tag` (JSON) | `body.illustManga.data[]` → `id` / `title` / `userName` / `xRestrict` | reuses your Pixiv session; **R-18 works are hidden until you are logged in and age-confirmed** |
 
 ### FANZA and the age gate
 
@@ -256,7 +257,7 @@ manga-legal-navigator/
 ### Tests
 
 ```bash
-node --test tests/*.test.js      # 117 tests, no network required
+node --test tests/*.test.js      # 130 tests, no network required
 npm test                         # same thing
 node tools/lint-anonymity.mjs    # fails if a real store/gallery identifier slipped in
 ```
@@ -327,6 +328,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 9. **Circle names in brackets** — for a title shaped like `[Circle Name (Author)] Work Title`, the first search variant keeps the bracketed form; the second variant drops it.
 10. **Browsers:** Chrome / Chromium first. Edge should work; Firefox would need a `browser.*` shim and a manifest adjustment.
 11. **A chapter that was published inside a magazine.** Some doujinshi appeared in a magazine issue, so the store only sells *that issue* (`…号 …`) while the gallery page lists the chapter title. The two titles share no text, so the extension reports “not found”; the search links do reach the issue, and matching it automatically would mean recommending a product we cannot verify.
+12. **Pixiv needs your session for R-18.** Pixiv only returns adult works to a logged-in, age-confirmed browser session (measured: an anonymous search with a very popular adult tag returns the same total but only all-ages entries). The extension therefore sends Pixiv requests with your cookies and, when a search comes back empty, says so in the popup instead of claiming the work does not exist. Pixiv titles also often differ from the doujinshi title, so a search can miss a work that is on Pixiv under another name.
 
 ---
 
@@ -347,7 +349,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * While the page is settling, page-info requests wait for the new content instead of answering with the old one, and the previous card is removed immediately.
   * New `settled` signal: when `og:url` / `canonical` disagree with the address bar, the page is treated as “still switching” and is never searched.
   * States now carry the id of the document that produced them (`page.scriptId`); the popup reuses a cached state only for the same document, and the background only stores a state if the tab is still on that URL.
-* Verified by hand against live pages (see [Verification](#verification)) and covered by 117 tests.
+* Verified by hand against live pages (see [Verification](#verification)) and covered by 130 tests.
 
 **0.2.2** — site root / listing pages are no longer analysed; navigation-bar text no longer counts as a “work page” signal.
 

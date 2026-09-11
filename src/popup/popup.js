@@ -122,7 +122,8 @@ function storesMarkup(state) {
         <a class="cand-title" href="${escapeHtml(store.match.url)}" target="_blank" rel="noopener noreferrer" data-open="${escapeHtml(store.match.url)}">${escapeHtml(store.match.title)}</a>
         <span class="cand-meta">${escapeHtml(price)} · 匹配度 ${escapeHtml(store.match.scoreLabel || '')}</span></li>`;
     }
-    return `<li><span class="store">${label}</span><span class="cand-meta">未找到</span>${searchLink}</li>`;
+    const note = store.note ? `<span class="cand-meta">${escapeHtml(store.note)}</span>` : '';
+    return `<li><span class="store">${label}</span><span class="cand-meta">未找到</span>${searchLink}${note}</li>`;
   }).join('');
   return `<h2 class="label">正版商店</h2><ul class="candidates store-list">${rows}</ul>`;
 }

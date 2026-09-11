@@ -163,7 +163,7 @@
 ## 7. 测试与自检
 
 ```bash
-# 单元测试 + 端到端流水线测试（用示例快照驱动，共 117 项）
+# 单元测试 + 端到端流水线测试（用示例快照驱动，共 130 项）
 node --test tests/*.test.js
 
 # 联网实测：验证 DLsite 的 URL 与解析是否仍然成立
@@ -286,6 +286,18 @@ extension/
 本项目假定使用者为成年人；MVP 不做年龄验证与内容审核（需求文档 §1、§3）。
 
 ## 14. 变更记录
+
+**v0.4.0**
+
+- 新增 **Pixiv** 适配器（`src/stores/pixiv.js`，注册在 `registry.js`，检索顺序：DLsite → FANZA → Melonbooks → Pixiv）：
+  - 走 Pixiv 的 JSON 搜索接口：`https://www.pixiv.net/ajax/search/artworks/<词>?word=…&order=date_d&mode=all&p=1&s_mode=s_tag&type=all&lang=ja`；
+  - 两级检索：先按**标签**（`s_mode=s_tag`），没有再按**标题 + 正文**（`s_mode=s_tc`）；
+  - **实测（2026-09）**：匿名请求对 R-18 作品不可见——用一个热门成人标签做对照，`total` 不变但返回条目全是 `xRestrict: 0`，即使把 `mode` 换成 `r18` 也一样。因此请求使用 `credentials: 'include'` 复用浏览器里「已登录 + 已确认年龄」的会话（与 FANZA 同一套思路），插件本身不会代你登录；
+  - 结果解析：`body.illustManga.data[]` → `productId`(id) / `title` / `author`(userName) / 作品页 URL `https://www.pixiv.net/artworks/<id>` / `ageRating`(xRestrict)；作品本身免费，所以价格字段留空而不是显示 0 円；
+  - 空结果标记为 `not-found`；接口报错（`{"error":true,…}`、非 JSON、结构变化）一律返回 `ok:false` + 具体 reason，**不会静默当成「没有结果」**；
+  - Pixiv 的「未找到」会在 Popup 的商店行里附带说明：R-18 需要登录并确认年龄（`emptyResultNote`，由适配器提供、pipeline 透传）。
+- manifest 新增 `https://www.pixiv.net/*` 主机权限；离线示例数据模式新增 `src/stores/fixtures/pixiv-search-sample.json`（合成快照）。
+- 回归测试 130 项（新增 7 项 Pixiv 用例）。
 
 **v0.3.1**
 

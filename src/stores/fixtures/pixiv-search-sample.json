@@ -1,0 +1,51 @@
+{
+  "error": false,
+  "message": "",
+  "body": {
+    "illustManga": {
+      "data": [
+        {
+          "id": "10000001",
+          "title": "サンプル作品ピクシブ 第1話",
+          "illustType": 0,
+          "xRestrict": 0,
+          "restrict": 0,
+          "url": "https://i.pximg.net/c/250x250_80_a2/img-master/img/2026/01/01/00/00/00/10000001_p0_square1200.jpg",
+          "userId": "20000001",
+          "userName": "サンプル作者ピー",
+          "width": 1200,
+          "height": 1700,
+          "pageCount": 1
+        },
+        {
+          "id": "10000002",
+          "title": "サンプル作品ピクシブ 第2話",
+          "illustType": 1,
+          "xRestrict": 1,
+          "restrict": 1,
+          "url": "https://i.pximg.net/c/250x250_80_a2/img-master/img/2026/01/02/00/00/00/10000002_p0_square1200.jpg",
+          "userId": "20000001",
+          "userName": "サンプル作者ピー",
+          "width": 1200,
+          "height": 1700,
+          "pageCount": 3
+        },
+        {
+          "id": "10000003",
+          "title": "サンプル作品ピクシブ 番外編",
+          "illustType": 1,
+          "xRestrict": 0,
+          "restrict": 0,
+          "url": "https://i.pximg.net/c/250x250_80_a2/img-master/img/2026/01/03/00/00/00/10000003_p0_square1200.jpg",
+          "userId": "20000002",
+          "userName": "サンプル作者キュー",
+          "width": 1200,
+          "height": 1700,
+          "pageCount": 1
+        }
+      ],
+      "total": 3
+    },
+    "relatedTags": []
+  }
+}

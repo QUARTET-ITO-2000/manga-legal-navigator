@@ -19,7 +19,8 @@ import { getAdapter } from '../stores/registry.js';
 const STORE_LABELS = {
   dlsite: 'DLsite',
   fanza: 'FANZA',
-  melonbooks: 'Melonbooks'
+  melonbooks: 'Melonbooks',
+  pixiv: 'Pixiv'
 };
 
 function toCandidateCard(item) {
@@ -301,7 +302,9 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
     ageCheckUrl: item.ageCheckUrl,
     itemCount: item.itemCount,
     match: item.best ? toCandidateCard(item.best) : null,
-    error: item.errors[0] ? (item.errors[0].reason || item.errors[0].error || '') : ''
+    error: item.errors[0] ? (item.errors[0].reason || item.errors[0].error || '') : '',
+    /** Stores can explain an empty result (e.g. Pixiv hides R-18 without a session). */
+    note: item.kind === 'none' ? (getAdapter(item.storeId).emptyResultNote || '') : ''
   }));
   state.searchUrls = storeResults
     .filter((item) => item.searchUrl)

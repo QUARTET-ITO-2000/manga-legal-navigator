@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-117%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.3.1-informational)
+![Tests](https://img.shields.io/badge/tests-130%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.4.0-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 适用范围与声明
@@ -115,6 +115,7 @@ chrome API 边界之上的部分都是纯函数，因此整条流水线可以在
 | **DLsite** | `https://www.dlsite.com/<section>/fsr/=/language/jp/keyword/<关键词>/` | `li[data-list_item_product_id]` + `dd.work_name` / `dd.work_price_wrap` | 关键词里的空格**必须**写成 `+`，写成 `%20` 会被 WAF 直接 403 |
 | **FANZA**（DMM） | `https://www.dmm.co.jp/search/=/searchstr/<关键词>/` | `/-/detail/=/cid=d_XXXXXX/` + `p.text-sm.font-bold` + `770円` + `サークル：…` | 需要年龄确认 Cookie，见下 |
 | **Melonbooks** | `https://www.melonbooks.co.jp/search/search.php?name=<关键词>&adult_check_flg=1` | `li.product_NNNNNNN` + `p.item-ttl.product_title` + `p.item-price` | 无需 Cookie |
+| **Pixiv** | `https://www.pixiv.net/ajax/search/artworks/<关键词>?…&s_mode=s_tag`（JSON） | `body.illustManga.data[]` → `id` / `title` / `userName` / `xRestrict` | 复用你的 Pixiv 会话；**R-18 作品必须登录并确认年龄后才搜得到** |
 
 ### FANZA 与年龄确认
 
@@ -256,7 +257,7 @@ manga-legal-navigator/
 ### 测试
 
 ```bash
-node --test tests/*.test.js      # 117 项，全部离线
+node --test tests/*.test.js      # 130 项，全部离线
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 检查仓库里是否混进了真实商品号 / 画廊号
 ```
@@ -316,6 +317,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 9. **方括号里的社团名**：标题形如 `[社团名 (作者)] 作品名` 时，第一个搜索变体保留方括号写法，第二个变体去掉它。
 10. **浏览器**：优先 Chrome / Chromium；Edge 应该可用；Firefox 需要 `browser.*` shim 并调整 manifest。
 11. **章节收录在杂志里**：有些同人作品是刊登在杂志上的，商店只卖**那一期杂志**（`…号 …`），而画廊页写的是章节名。两者没有共同文字，因此插件会显示「暂未找到」；搜索入口能跳到那一期杂志，但要自动匹配就等于推荐一个无法验证的商品。
+12. **Pixiv 的 R-18 需要你的会话**：Pixiv 只对「已登录 + 已确认年龄」的会话返回成人作品（实测：匿名搜索一个热门成人标签，总数不变但返回的全是全年龄条目）。因此插件对 Pixiv 的请求会带上你的 Cookie；搜索为空时会在 Popup 里说明原因，而不是断言「这部作品不存在」。另外 Pixiv 上的标题常与同人志标题不同，可能搜不到实际存在的作品。
 
 ---
 
@@ -336,7 +338,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * 换页期间，页面信息请求会等新内容就绪再回答，不会再拿旧内容应付；旧卡片同时立即移除。
   * 新增 `settled` 信号：`og:url` / `canonical` 与地址栏不一致时，按「还没换好」处理，绝不拿去搜索。
   * 状态里记录产生它的文档编号（`page.scriptId`）：只有同一份文档才复用缓存；后台也只在标签页仍停在原地址时才写入状态。
-* 已按上表在真机验证，回归测试 117 项。
+* 已按上表在真机验证，回归测试 130 项。
 
 **0.2.2** — 站点根路径 / 列表页不再分析；导航栏文案不再被当成「作品页」信号。
 

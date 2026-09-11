@@ -3,7 +3,7 @@
  * measurements (requirements doc §10 / §21).
  */
 
-export const EXTENSION_VERSION = '0.3.1';
+export const EXTENSION_VERSION = '0.4.0';
 
 export const CONFIG = {
   matcher: {
@@ -47,8 +47,8 @@ export const CONFIG = {
     maxItemsPerStep: 30
   },
   stores: {
-    /** search order: DLsite first, then FANZA / Melonbooks when nothing is convincing (requirements doc §23) */
-    enabled: ['dlsite', 'fanza', 'melonbooks']
+    /** search order: DLsite first, then FANZA / Melonbooks / Pixiv when nothing is convincing (requirements doc §23) */
+    enabled: ['dlsite', 'fanza', 'melonbooks', 'pixiv']
   },
   extractor: {
     /** how much page text to sample (used to decide "is this a manga page?") */

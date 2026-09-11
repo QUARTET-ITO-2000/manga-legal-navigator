@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-117%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.3.1-informational)
+![Tests](https://img.shields.io/badge/tests-130%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.4.0-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 対象と免責
@@ -115,6 +115,7 @@ chrome API の境界より上はすべて純粋関数なので、パイプライ
 | **DLsite** | `https://www.dlsite.com/<section>/fsr/=/language/jp/keyword/<キーワード>/` | `li[data-list_item_product_id]` + `dd.work_name` / `dd.work_price_wrap` | キーワード内の空白は**必ず** `+`。`%20` は WAF により HTTP 403 |
 | **FANZA**（DMM） | `https://www.dmm.co.jp/search/=/searchstr/<キーワード>/` | `/-/detail/=/cid=d_XXXXXX/` + `p.text-sm.font-bold` + `770円` + `サークル：…` | 年齢確認 Cookie が必要（下記） |
 | **Melonbooks** | `https://www.melonbooks.co.jp/search/search.php?name=<キーワード>&adult_check_flg=1` | `li.product_NNNNNNN` + `p.item-ttl.product_title` + `p.item-price` | Cookie 不要 |
+| **Pixiv** | `https://www.pixiv.net/ajax/search/artworks/<キーワード>?…&s_mode=s_tag`（JSON） | `body.illustManga.data[]` → `id` / `title` / `userName` / `xRestrict` | ブラウザの Pixiv セッションを再利用。**R-18 作品はログイン＋年齢確認をしないと検索に出ません** |
 
 ### FANZA と年齢確認
 
@@ -256,7 +257,7 @@ manga-legal-navigator/
 ### テスト
 
 ```bash
-node --test tests/*.test.js      # 117 件、すべてオフライン
+node --test tests/*.test.js      # 130 件、すべてオフライン
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 実在の商品 ID / ギャラリー ID が混入していないか検査
 ```
@@ -316,6 +317,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 9. **角括弧つきのサークル名** — `[サークル名 (作者)] 作品タイトル` のような形では、最初の検索バリアントが括弧つきのままになります（2つ目のバリアントでは括弧を外します）。
 10. **ブラウザ:** Chrome / Chromium を優先。Edge は動作する見込みです。Firefox は `browser.*` のシムと manifest の調整が必要です。
 11. **雑誌に収録された章:** 同人作品が雑誌に掲載された場合、ストアは**その号**（`…号 …`）しか扱っておらず、ギャラリーには章のタイトルが載っています。両者に共通する文字列がないため「見つかりません」と表示されます。検索リンクはその号に到達しますが、自動で一致と判定すると検証できない商品を推薦することになります。
+12. **Pixiv の R-18 にはセッションが必要:** Pixiv は「ログイン済み＋年齢確認済み」のセッションにしか成人向け作品を返しません（実測: 匿名で人気の成人向けタグを検索すると、総数は同じでも返るのは全年齢のみ）。そのため Pixiv へのリクエストは Cookie 付きで送り、検索が空だった場合はその旨をポップアップに表示します（作品が存在しないと断定はしません）。また Pixiv のタイトルは同人誌のタイトルと異なることが多く、別名で存在する作品を拾えない場合があります。
 
 ---
 
@@ -336,7 +338,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * 遷移中はページ情報の要求に古い内容で答えず、新しい内容が揃うまで待ちます。前のページのカードもその場で取り除きます。
   * `settled` シグナルを追加: `og:url` / `canonical` がアドレスバーと食い違う場合は「切り替え中」として扱い、検索には使いません。
   * 状態にドキュメント識別子（`page.scriptId`）を持たせ、同じドキュメントのときだけキャッシュを再利用。バックグラウンドもタブが同じ URL に留まっている場合のみ状態を保存します。
-* 実サイトで検証済み（[検証](#検証)）。テストは 117 件。
+* 実サイトで検証済み（[検証](#検証)）。テストは 130 件。
 
 **0.2.2** — サイトのルート / 一覧ページを分析対象から除外。ナビゲーションの文言を「作品ページ」の根拠にしないようにしました。
 
