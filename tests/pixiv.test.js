@@ -39,9 +39,9 @@ test('Pixiv：解析搜索结果（标题 / 作者 / 作品页链接 / 年龄分
   assert.equal(result.items[1].ageRating, 1);
 });
 
-test('Pixiv：作品本身免费，因此价格字段为空而不是 0 円', () => {
+test('Pixiv：不声称作品免费（能打开不等于免费），价格字段留空', () => {
   const result = adapter.parseResults(sample, { id: 'tag' });
-  assert.equal(result.items[0].isFree, true);
+  assert.equal(result.items[0].isFree, false);
   assert.equal(result.items[0].price, null);
   assert.equal(result.items[0].priceText, '');
 });

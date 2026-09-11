@@ -89,7 +89,10 @@ export class PixivAdapter extends StoreAdapter {
         author: String(entry.userName || '').trim(),
         maker: String(entry.userName || '').trim(),
         imageUrl: String(entry.url || ''),
-        isFree: true,
+        // Being able to open a work on Pixiv does not mean it is free: posts can
+        // be supporters-only or behind a paid plan, and the search API does not
+        // expose a price. So no price is claimed at all.
+        isFree: false,
         price: null,
         priceText: '',
         category: 'pixiv',
