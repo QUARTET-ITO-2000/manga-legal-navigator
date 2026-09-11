@@ -178,7 +178,8 @@ function renderResult(state) {
         ${(state.searchUrls && state.searchUrls.length
         ? state.searchUrls
         : (state.searchUrl ? [{ storeLabel: 'DLsite', url: state.searchUrl }] : []))
-        .map((item, index) => `<a class="btn ${index === 0 ? 'primary' : 'ghost'}" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" data-open="${escapeHtml(item.url)}">${escapeHtml(item.storeLabel)}</a>`)
+        // Highlighted = this store had results; grey = nothing was found there.
+        .map((item) => `<a class="btn ${item.found ? 'primary' : 'ghost'}" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" data-open="${escapeHtml(item.url)}">${escapeHtml(item.storeLabel)}</a>`)
         .join('')}
         ${state.needsAgeCheck && state.ageCheckUrl ? `<a class="btn ghost" href="${escapeHtml(state.ageCheckUrl)}" target="_blank" rel="noopener noreferrer" data-open="${escapeHtml(state.ageCheckUrl)}">${escapeHtml(state.ageCheckStoreLabel || 'FANZA')} 年龄确认</a>` : ''}
         <button class="btn ghost" data-action="show-card">在页面显示</button>

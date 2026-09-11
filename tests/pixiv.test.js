@@ -76,8 +76,9 @@ test('Pixiv：未找到时给出 R-18 需要登录 / 年龄确认的说明', () 
 
 test('Pixiv：作者不靠抓取，而是给用户一个作者搜索链接', () => {
   const url = adapter.buildArtistSearchUrl('サンプルサークルA');
-  assert.ok(url.startsWith('https://www.pixiv.net/search/users?word='));
+  assert.ok(url.startsWith('https://www.pixiv.net/search/users?nick='));
   assert.ok(url.includes(encodeURIComponent('サンプルサークルA')));
+  assert.ok(url.includes('s_mode=s_usr'));
   // Artist names are not turned into extra search steps any more: Pixiv's user
   // search only returns a few preview works, so the user looks it up directly.
   assert.equal(adapter.searchPlan('サンプル作品アルファ').length, 2);

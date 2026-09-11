@@ -191,8 +191,9 @@
       ? state.searchUrls
       : (state.searchUrl ? [{ storeLabel: 'DLsite', url: state.searchUrl }] : []);
     const buttons = links.length
-      ? `<div class="actions">${links.map((item, index) => (
-        `<a class="btn ${index === 0 ? 'primary' : 'ghost'}" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.storeLabel || '商店')}</a>`
+      ? `<div class="actions">${links.slice(0, 3).map((item) => (
+        // Highlighted = that store had results; grey = nothing found there.
+        `<a class="btn ${item.found ? 'primary' : 'ghost'}" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.storeLabel || '商店')}</a>`
       )).join('')}</div>`
       : '<span class="cny">没有可用的搜索关键词</span>';
     const ageHint = state.needsAgeCheck

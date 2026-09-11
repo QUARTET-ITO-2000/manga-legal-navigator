@@ -56,9 +56,11 @@ export class PixivAdapter extends StoreAdapter {
    * Pixiv's user search, handed to the user instead of being searched here:
    * its API only returns a few preview works per artist, so letting the user
    * open the artist's own page is both cheaper and more reliable.
+   * The parameter is `nick` (not `word`): /search/users?nick=…&s_mode=s_usr is
+   * the form the site itself uses.
    */
   buildArtistSearchUrl(artist) {
-    return `${PIXIV_ORIGIN}/search/users?word=${encodeKeyword(artist)}`;
+    return `${PIXIV_ORIGIN}/search/users?nick=${encodeKeyword(artist)}&s_mode=s_usr`;
   }
 
   searchPlan(query) {

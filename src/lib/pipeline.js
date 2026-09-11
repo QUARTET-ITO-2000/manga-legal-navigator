@@ -318,12 +318,24 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
     /** Stores can explain an empty result (e.g. Pixiv hides R-18 without a session). */
     note: item.kind === 'none' ? (getAdapter(item.storeId).emptyResultNote || '') : ''
   }));
-  state.searchUrls = storeResults
+  const storeLinks = storeResults
     .filter((item) => item.searchUrl)
-    .map((item) => ({ storeLabel: item.storeLabel, url: item.searchUrl }));
-  // Artist links are shown next to the store search links, so the user can look
-  // the author up themselves (see the artist note above).
-  state.searchUrls = [...state.searchUrls, ...artistLinks];
+    .map((item) => ({
+      storeLabel: item.storeLabel,
+      url: item.searchUrl,
+      /** Did this store actually return a usable match? */
+      found: Boolean(item.match)
+    }));
+  // The button list mirrors what the search produced: stores that found
+  // something are highlighted and moved to the front (DLsite first, then the
+  // configured order); the stores that found nothing stay as grey buttons
+  // behind them. When no store found anything, the artist lookup is the one
+  // useful action, so it takes the highlight instead.
+  const foundLinks = storeLinks.filter((link) => link.found);
+  const emptyLinks = storeLinks.filter((link) => !link.found);
+  const highlightedArtists = foundLinks.length ? [] : artistLinks.map((link) => ({ ...link, found: true }));
+  const plainArtists = foundLinks.length ? artistLinks : [];
+  state.searchUrls = [...foundLinks, ...highlightedArtists, ...emptyLinks, ...plainArtists];
   state.searchUrl = (dlsiteResult && dlsiteResult.searchUrl)
     || (state.searchUrls[0] && state.searchUrls[0].url)
     || '';

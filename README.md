@@ -336,6 +336,12 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 
 ## Changelog
 
+**0.5.4**
+
+* The action buttons now mirror what each store actually returned: a store that found something gets a **highlighted button and moves to the front** (DLsite first, then the configured order), while stores that found nothing stay as grey buttons behind them. When no store found anything, the artist lookup takes the highlight instead — it is the only action that can still help.
+* Pixiv's artist link now uses the parameter the site itself uses: `/search/users?nick=<name>&s_mode=s_usr` (the previous `?word=` form returned no users at all).
+* Artist names now prefer the **Japanese** name written in the bracketed prefix of the Japanese heading (`[らーめん] …`), because the info block's `Artists` / `Groups` fields carry the romanised slug (`ra-men 171`) — searching a Japanese site with that finds nobody.
+
 **0.3.1**
 
 * Store keywords no longer carry punctuation or source annotations.
