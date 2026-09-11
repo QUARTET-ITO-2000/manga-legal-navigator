@@ -165,7 +165,10 @@ function main() {
 
   const fromGit = scanAll ? null : repositoryFiles(root);
   const files = target ? listFiles(root, target) : (fromGit || listFiles(root, '.'))
-    .filter((file) => TEXT_EXTENSIONS.has(file.slice(file.lastIndexOf('.'))));
+    .filter((file) => TEXT_EXTENSIONS.has(file.slice(file.lastIndexOf('.'))))
+    // `git ls-files` also lists files that were just deleted from the working
+    // tree, which would make readFileSync throw.
+    .filter((file) => existsSync(join(root, file)));
 
   const checker = createChecker({
     allow: readList(join(root, ALLOWLIST_PATH)),

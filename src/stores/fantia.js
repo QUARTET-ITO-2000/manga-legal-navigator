@@ -2,20 +2,29 @@
  * Fantia adapter.
  *
  * Measured in 2026-09:
- *  1. Public JSON search — no page scraping and no private proxy:
- *     GET https://fantia.jp/api/v1/search/posts?q=<keyword>
- *       -> {"posts":[{"id":…,"title":"…"}, …]}
- *  2. A post page (https://fantia.jp/posts/<id>) answers 200 without a session.
- *  3. Fantia has no HTML search route (`/search?q=` is 404), so the API above is
- *     the only entry point.
- *  4. Adult posts may be hidden behind an age confirmation; requests therefore
- *     use credentials: 'include' (like FANZA) to reuse the browser's state, and
- *     an age-check page is reported as such instead of "no results".
+ *  1. The real search entry point is the post search page:
+ *     https://fantia.jp/posts?brand_type=0&keyword=<word>&stock=all&category=…
+ *     Anonymous requests get 302 -> https://fantia.jp/sessions/signin, so the
+ *     page only answers for a signed-in visitor; requests therefore reuse the
+ *     browser session (credentials: 'include', like FANZA).
+ *  2. https://fantia.jp/api/v1/search/posts?q=… looks like a search API but
+ *     ignores `q` and returns an unrelated default list — using it produced
+ *     false "no results". It is deliberately NOT used.
+ *  3. A result card contains a link to the post (/posts/<id>, whose accessible
+ *     name is `<creator>の投稿「<title>」`) and, next to it, a link to the
+ *     creator's fanclub (/fanclubs/<id>) carrying the circle name.
  */
 
 import { StoreAdapter } from './store-adapter.js';
+import { collapseSpaces, decodeEntities, stripTags } from '../lib/text.js';
 
 const FANTIA_ORIGIN = 'https://fantia.jp';
+/** The category list the site itself puts in its search URL. */
+const CATEGORIES = [
+  'illust', 'comic', 'vtuber', 'voice', 'voiceactor', '3d', '2d_anime', 'game', 'music',
+  'novel', 'doll', 'art', 'program', 'handmade', 'history', 'railroad', 'shop', 'other',
+  'fortune', 'cosplay', 'idol', 'youtuber', 'photo_movie', 'other_real'
+].join(',');
 
 function encodeKeyword(query) {
   return encodeURIComponent(String(query ?? '').trim());
@@ -24,19 +33,21 @@ function encodeKeyword(query) {
 export class FantiaAdapter extends StoreAdapter {
   constructor() {
     super({ id: 'fantia', label: 'Fantia', homeUrl: FANTIA_ORIGIN });
-    // Reuse the browser's Fantia session so age-restricted posts stay visible.
+    // The search page needs a session; reuse the browser's, so age-confirmed
+    // accounts see the same results they would see in a tab.
     this.fetchOptions = { credentials: 'include' };
+    this.loginUrl = `${FANTIA_ORIGIN}/sessions/signin`;
     this.ageCheckUrl = `${FANTIA_ORIGIN}/age_check`;
-    this.emptyResultNote = 'Fantia 的成人向内容可能需要先在浏览器里完成年龄确认，插件才能搜到。';
+    this.emptyResultNote = 'Fantia 的搜索需要登录（成人向内容还可能需要先确认年龄），插件复用你浏览器的登录状态。';
   }
 
   buildSearchUrl(query) {
-    return `${FANTIA_ORIGIN}/api/v1/search/posts?q=${encodeKeyword(query)}`;
+    return `${FANTIA_ORIGIN}/posts?brand_type=0&keyword=${encodeKeyword(query)}`
+      + `&stock=all&category=${encodeURIComponent(CATEGORIES)}`;
   }
 
+  /** Same page, opened in a tab (the user's own session renders it). */
   buildHumanSearchUrl(query) {
-    // Fantia has no search page, so the manual fallback is a site-wide keyword
-    // search through the same API endpoint (the browser renders the JSON).
     return this.buildSearchUrl(query);
   }
 
@@ -53,43 +64,62 @@ export class FantiaAdapter extends StoreAdapter {
   parseResults(text, ctx = {}) {
     const base = { ok: false, reason: 'no-items-parsed', items: [], step: ctx.id };
     const raw = String(text ?? '');
-    let payload;
-    try {
-      payload = JSON.parse(raw);
-    } catch {
-      // Not JSON: an age confirmation page is the common reason.
-      if (/age_check|年齢確認|18歳以上/.test(raw)) {
-        return { ...base, reason: 'age-check', needsAgeCheck: true, ageCheckUrl: this.ageCheckUrl };
-      }
-      if (/<html/i.test(raw)) return { ...base, reason: 'blocked' };
-      return { ...base, reason: 'invalid-json' };
+
+    // A signed-out response is a redirect into the sign-in page: report it as a
+    // session problem instead of "this work does not exist".
+    if (/\/sessions\/signin|ログインしてください|sign in to fantia/i.test(raw)) {
+      return { ...base, reason: 'login-required', needsLogin: true, loginUrl: this.loginUrl };
+    }
+    if (/age_check|年齢確認|18歳以上/.test(raw)) {
+      return { ...base, reason: 'age-check', needsAgeCheck: true, ageCheckUrl: this.ageCheckUrl };
     }
 
-    const posts = payload?.posts || payload?.body?.posts;
-    if (!Array.isArray(posts)) return base;
-
-    const items = posts
-      .filter((post) => post && (post.id || post.post_id))
-      .map((post) => ({
-        productId: String(post.id || post.post_id),
-        store: 'fantia',
-        title: String(post.title || '').trim(),
-        url: `${FANTIA_ORIGIN}/posts/${post.id || post.post_id}`,
-        author: String(post.fanclub?.name || post.fanclub_name || '').trim(),
-        maker: String(post.fanclub?.name || post.fanclub_name || '').trim(),
-        imageUrl: String(post.thumbnail || post.main_image || ''),
-        // Fantia posts can be free or supporters-only; the search API exposes no
-        // price, so nothing is claimed about it.
-        isFree: false,
-        price: null,
-        priceText: '',
-        category: 'fantia'
-      }))
-      .filter((item) => item.title);
-
-    if (!items.length) return { ...base, ok: true, reason: 'not-found' };
-    return { ok: true, reason: 'ok', items, total: items.length, step: ctx.id };
+    const items = parseCards(raw);
+    if (items.length) return { ok: true, reason: 'ok', items, total: items.length, step: ctx.id };
+    // No cards and no sign-in marker: either a genuine empty result page or a
+    // markup change. Both are reported without pretending we found something.
+    if (/検索結果|の投稿/.test(raw)) return { ...base, ok: true, reason: 'not-found' };
+    return base;
   }
 }
 
-export { encodeKeyword as encodeFantiaKeyword };
+/** One card = a post link whose text is `<creator>の投稿「<title>」`. */
+function parseCards(html) {
+  const items = [];
+  const seen = new Set();
+  const link = /href="\/posts\/(\d+)"[^>]*>([\s\S]{0,400}?)<\/a>/gi;
+  for (const match of html.matchAll(link)) {
+    const id = match[1];
+    if (seen.has(id)) continue;
+    let title = collapseSpaces(decodeEntities(stripTags(match[2])));
+    const quoted = title.match(/「([^」]+)」/);
+    if (quoted) title = quoted[1];
+    title = collapseSpaces(title);
+    if (title.length < 2) continue;
+
+    // The circle link sits right after the post link inside the same card.
+    const after = html.slice(match.index + match[0].length, match.index + match[0].length + 900);
+    const club = after.match(/href="\/fanclubs\/\d+"[^>]*>([\s\S]{0,140}?)<\/a>/i);
+    const author = club ? collapseSpaces(decodeEntities(stripTags(club[1]))) : '';
+
+    seen.add(id);
+    items.push({
+      productId: id,
+      store: 'fantia',
+      title,
+      url: `${FANTIA_ORIGIN}/posts/${id}`,
+      author,
+      maker: author,
+      imageUrl: '',
+      // A post can be free or supporters-only and the search page exposes no
+      // price, so nothing is claimed about it.
+      isFree: false,
+      price: null,
+      priceText: '',
+      category: 'fantia'
+    });
+  }
+  return items;
+}
+
+export { encodeKeyword as encodeFantiaKeyword, parseCards as parseFantiaCards };

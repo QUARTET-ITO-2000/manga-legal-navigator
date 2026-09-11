@@ -24,7 +24,7 @@ const MOCK_FIXTURES = {
   fanza: 'src/stores/fixtures/fanza-search-sample.html',
   melonbooks: 'src/stores/fixtures/melonbooks-search-sample.html',
   pixiv: 'src/stores/fixtures/pixiv-search-sample.json',
-  fantia: 'src/stores/fixtures/fantia-search-sample.json'
+  fantia: 'src/stores/fixtures/fantia-search-sample.html'
 };
 
 async function politeFetchText(url, { timeoutMs = CONFIG.search.timeoutMs, credentials = 'omit' } = {}) {
