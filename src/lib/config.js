@@ -3,7 +3,7 @@
  * measurements (requirements doc §10 / §21).
  */
 
-export const EXTENSION_VERSION = '0.4.1';
+export const EXTENSION_VERSION = '0.4.2';
 
 export const CONFIG = {
   matcher: {

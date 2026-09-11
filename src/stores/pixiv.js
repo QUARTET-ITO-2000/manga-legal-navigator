@@ -52,34 +52,23 @@ export class PixivAdapter extends StoreAdapter {
     return `${PIXIV_ORIGIN}/search.php?word=${encodeKeyword(query)}&order=date_d&s_mode=s_tag`;
   }
 
-  /** Artist search: returns the matching users plus a preview of their works. */
-  buildUserSearchUrl(query) {
-    const encoded = encodeKeyword(query);
-    return `${PIXIV_ORIGIN}/ajax/search/users/${encoded}?word=${encoded}&p=1&lang=ja`;
+  /**
+   * Pixiv's user search, handed to the user instead of being searched here:
+   * its API only returns a few preview works per artist, so letting the user
+   * open the artist's own page is both cheaper and more reliable.
+   */
+  buildArtistSearchUrl(artist) {
+    return `${PIXIV_ORIGIN}/search/users?word=${encodeKeyword(artist)}`;
   }
 
-  searchPlan(query, options = {}) {
-    const steps = SEARCH_MODES.map((mode) => ({
+  searchPlan(query) {
+    return SEARCH_MODES.map((mode) => ({
       id: mode.id,
       tier: mode.tier,
       label: `${this.label} (${mode.id})`,
       url: this.buildSearchUrl(query, { sMode: mode.sMode }),
       query
     }));
-    // Artist fallback (optional, on by default): Pixiv often stores a work under
-    // a different title than the doujinshi site, but the author stays the same.
-    const artists = Array.isArray(options.artists) ? options.artists.slice(0, 2) : [];
-    for (const artist of artists) {
-      steps.push({
-        id: `artist:${artist}`,
-        kind: 'artist',
-        tier: 2,
-        label: `${this.label} (artist)`,
-        url: this.buildUserSearchUrl(artist),
-        query: artist
-      });
-    }
-    return steps;
   }
 
   parseResults(text, ctx = {}) {
@@ -94,8 +83,6 @@ export class PixivAdapter extends StoreAdapter {
     if (!payload || payload.error) {
       return { ...base, reason: payload?.message ? 'blocked' : 'unexpected-payload' };
     }
-
-    if (ctx.kind === 'artist') return this.parseArtistResults(payload, ctx);
 
     const block = payload.body?.illustManga || payload.body?.manga;
     if (!block || !Array.isArray(block.data)) return base;
@@ -114,22 +101,6 @@ export class PixivAdapter extends StoreAdapter {
     return { ok: true, reason: 'ok', items, total, step: ctx.id };
   }
 
-  /**
-   * Results of an artist search: each user carries a preview list of their
-   * works (`illusts`), which is enough to match a title against.
-   */
-  parseArtistResults(payload, ctx = {}) {
-    const base = { ok: false, reason: 'no-items-parsed', items: [], step: ctx.id };
-    const users = payload.body?.users?.data;
-    if (!Array.isArray(users)) return base;
-    const items = users.flatMap((user) => (Array.isArray(user?.illusts) ? user.illusts : [])
-      .filter((work) => work && work.id)
-      .map((work) => toItem(work, user.userName)));
-    // A user without a visible works preview is not an error: it just means we
-    // have nothing to match against.
-    if (!items.length) return { ...base, ok: true, reason: 'not-found' };
-    return { ok: true, reason: 'ok', items, total: items.length, step: ctx.id };
-  }
 }
 
 export { encodeKeyword as encodePixivKeyword };

@@ -90,7 +90,7 @@ function baseState(pageInfo) {
  * Returns { storeId, storeLabel, kind, best, candidates, preview, searchUrl, needsAgeCheck, errors, fromCache, itemCount }
  * kind: 'high' | 'possible' | 'none' | 'error' | 'age_check'
  */
-async function searchStore({ adapter, queries, extraction, deps, storeOptions = {} }) {
+async function searchStore({ adapter, queries, extraction, deps }) {
   const result = {
     storeId: adapter.id,
     storeLabel: adapter.label,
@@ -153,7 +153,7 @@ async function searchStore({ adapter, queries, extraction, deps, storeOptions = 
     const primarySteps = [];
     const fallbackSteps = [];
     queries.forEach((query, index) => {
-      const plan = adapter.searchPlan(query, storeOptions);
+      const plan = adapter.searchPlan(query);
       primarySteps.push(...plan.filter((step) => (step.tier ?? 1) === 1));
       if (index === 0) fallbackSteps.push(...plan.filter((step) => (step.tier ?? 1) === 2));
     });
@@ -270,12 +270,16 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
   const queriesToSearch = storeQueries.length ? storeQueries : searchQueries;
   state.query.searched = queriesToSearch;
 
-  // Optional extra search by author / circle name (on by default): a work can
-  // be stored under a different title on another site, but the author is the
-  // same — stores turn these into their own "search by author" step.
+  // Author / circle names from the page (on by default): a work can be stored
+  // under a different title elsewhere, so the artist is the most useful hint.
+  // Pixiv's user-search API only returns a few preview works per artist, so
+  // instead of searching and guessing we hand the user a link to the artist.
   const artists = settings.artistFallback === false ? [] : (extraction.artists || []);
   state.query.artists = artists;
-  const storeOptions = { artists };
+  const artistLinks = artists.map((artist) => ({
+    storeLabel: `Pixiv 作者: ${artist}`,
+    url: getAdapter('pixiv').buildArtistSearchUrl(artist)
+  }));
 
   // Ask each store in turn: stop at DLsite when it is convincing, otherwise continue to FANZA / Melonbooks
   const storeResults = [];
@@ -285,7 +289,7 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
     const queries = storeId === 'dlsite'
       ? queriesToSearch
       : queriesToSearch.slice(0, Math.max(1, CONFIG.search.maxVariantsForExtraStores));
-    const result = await searchStore({ adapter: storeAdapter, queries, extraction, deps, storeOptions });
+    const result = await searchStore({ adapter: storeAdapter, queries, extraction, deps });
     storeResults.push(result);
     if (result.best && (!bestOverall || result.best.score > bestOverall.score)) bestOverall = result.best;
     if (result.kind === 'high') break;
@@ -316,6 +320,9 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
   state.searchUrls = storeResults
     .filter((item) => item.searchUrl)
     .map((item) => ({ storeLabel: item.storeLabel, url: item.searchUrl }));
+  // Artist links are shown next to the store search links, so the user can look
+  // the author up themselves (see the artist note above).
+  state.searchUrls = [...state.searchUrls, ...artistLinks];
   state.searchUrl = (dlsiteResult && dlsiteResult.searchUrl)
     || (state.searchUrls[0] && state.searchUrls[0].url)
     || '';

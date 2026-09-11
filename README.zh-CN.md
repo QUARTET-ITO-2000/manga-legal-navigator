@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-134%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.4.1-informational)
+![Tests](https://img.shields.io/badge/tests-136%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.4.2-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 适用范围与声明

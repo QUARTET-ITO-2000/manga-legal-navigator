@@ -74,35 +74,11 @@ test('Pixiv：未找到时给出 R-18 需要登录 / 年龄确认的说明', () 
   assert.equal(adapter.fetchOptions.credentials, 'include', '需要复用浏览器里的 Pixiv 会话');
 });
 
-test('Pixiv：开启作者兜底时追加「作者搜索」步骤，关闭时不追加', () => {
-  const withArtists = adapter.searchPlan('サンプル作品アルファ', { artists: ['サンプルサークルA'] });
-  const artistStep = withArtists.find((step) => step.kind === 'artist');
-  assert.ok(artistStep, '应包含作者搜索步骤');
-  assert.ok(artistStep.url.includes('/ajax/search/users/'));
-  assert.equal(artistStep.tier, 2);
-  assert.equal(artistStep.query, 'サンプルサークルA');
-
-  const without = adapter.searchPlan('サンプル作品アルファ', { artists: [] });
-  assert.equal(without.some((step) => step.kind === 'artist'), false);
-});
-
-test('Pixiv：作者搜索的结果会展开成候选作品（标题不同也能命中）', () => {
-  const users = JSON.stringify({
-    error: false,
-    body: {
-      users: {
-        data: [{
-          userId: '20000001',
-          userName: 'サンプル作者ピー',
-          illusts: [{ id: '10000009', title: 'サンプル作品ピクシブ 別タイトル', xRestrict: 1, url: 'https://i.pximg.net/x.jpg' }]
-        }]
-      }
-    }
-  });
-  const result = adapter.parseResults(users, { id: 'artist:サンプル作者ピー', kind: 'artist' });
-  assert.equal(result.ok, true);
-  assert.equal(result.items.length, 1);
-  assert.equal(result.items[0].url, 'https://www.pixiv.net/artworks/10000009');
-  assert.equal(result.items[0].author, 'サンプル作者ピー');
-  assert.equal(result.items[0].store, 'pixiv');
+test('Pixiv：作者不靠抓取，而是给用户一个作者搜索链接', () => {
+  const url = adapter.buildArtistSearchUrl('サンプルサークルA');
+  assert.ok(url.startsWith('https://www.pixiv.net/search/users?word='));
+  assert.ok(url.includes(encodeURIComponent('サンプルサークルA')));
+  // Artist names are not turned into extra search steps any more: Pixiv's user
+  // search only returns a few preview works, so the user looks it up directly.
+  assert.equal(adapter.searchPlan('サンプル作品アルファ').length, 2);
 });
