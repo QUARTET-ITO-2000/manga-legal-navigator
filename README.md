@@ -10,8 +10,8 @@ If the match is not convincing, it says **“no matching product found”** and 
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-113%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.3.0-informational)
+![Tests](https://img.shields.io/badge/tests-117%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.3.1-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### Scope and disclaimer
@@ -256,7 +256,7 @@ manga-legal-navigator/
 ### Tests
 
 ```bash
-node --test tests/*.test.js      # 113 tests, no network required
+node --test tests/*.test.js      # 117 tests, no network required
 npm test                         # same thing
 ```
 
@@ -314,10 +314,18 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 8. **Client-side navigation** is detected via `pushState` hooks plus a 0.9 s URL poll, and the extension then waits for the DOM to settle (400 ms quiet, 5 s maximum). On an unusually slow site the first analysis may use the previous content; it re-analyses automatically once the new content lands, and the popup has a manual “Re-analyse” button.
 9. **Circle names in brackets** — for a title shaped like `[Circle Name (Author)] Work Title`, the first search variant keeps the bracketed form; the second variant drops it.
 10. **Browsers:** Chrome / Chromium first. Edge should work; Firefox would need a `browser.*` shim and a manifest adjustment.
+11. **A chapter that was published inside a magazine.** Some doujinshi appeared in a magazine issue, so the store only sells *that issue* (`…号 …`) while the gallery page lists the chapter title. The two titles share no text, so the extension reports “not found”; the search links do reach the issue, and matching it automatically would mean recommending a product we cannot verify.
 
 ---
 
 ## Changelog
+
+**0.3.1**
+
+* Store keywords no longer carry punctuation or source annotations.
+  * Measured in 2026-09: a keyword containing punctuation (e.g. `サンプル！作品 第2巻`) returns **0 items** on Melonbooks, while the space-separated form finds the product — punctuation in a keyword silently kills the search. Keywords sent to a store now have punctuation replaced by spaces; the title shown to the user keeps its original form, and scores are unaffected because the matcher strips punctuation anyway.
+  * A trailing bracket that describes the source or the format — a magazine issue `(サンプルマガジン Vol.54)`, a page count `(…ページ)`, an event issue `(C…)` — is now removed *before* volume numbers are stripped. Stripping the number first left a dangling `(name )` behind, which made the keyword unsearchable.
+  * Verified on the reported pages: two of them now match on Melonbooks with a score of 100, and the store search link of the third reaches the magazine issue the chapter ran in (that one still reports “not found” — see limitation 11).
 
 **0.3.0**
 
@@ -327,7 +335,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * While the page is settling, page-info requests wait for the new content instead of answering with the old one, and the previous card is removed immediately.
   * New `settled` signal: when `og:url` / `canonical` disagree with the address bar, the page is treated as “still switching” and is never searched.
   * States now carry the id of the document that produced them (`page.scriptId`); the popup reuses a cached state only for the same document, and the background only stores a state if the tab is still on that URL.
-* Verified by hand against live pages (see [Verification](#verification)) and covered by 113 tests.
+* Verified by hand against live pages (see [Verification](#verification)) and covered by 117 tests.
 
 **0.2.2** — site root / listing pages are no longer analysed; navigation-bar text no longer counts as a “work page” signal.
 

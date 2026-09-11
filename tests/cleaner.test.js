@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { cleanTitle, extractWorkTitle } from '../src/lib/cleaner.js';
+import { toStoreQuery } from '../src/lib/text.js';
 
 test('测试 A：标准标题「作品名称 第12话」能识别出作品名称', () => {
   const result = cleanTitle('作品名称 第12话');
@@ -184,13 +185,13 @@ test('中文译名不会压过日文原题', () => {
   assert.equal(extraction.cleanedTitle, 'サンプル作品イータ');
 });
 
-test('翻译/汉化标签（[中国翻訳] [甜族星人赞助汉化]）会被去掉', () => {
+test('翻译/汉化标签（[中国翻訳] [サンプル汉化组]）会被去掉', () => {
   assert.equal(
     cleanTitle('[作者名C] サンプル作品イプシロン [中国翻訳] [DL版]').cleaned,
     'サンプル作品イプシロン'
   );
   assert.equal(
-    cleanTitle('[Author C] Sample Romaji Epsilon [Chinese] [甜族星人赞助汉化] [Digital]').cleaned,
+    cleanTitle('[Author C] Sample Romaji Epsilon [Chinese] [サンプル汉化组] [Digital]').cleaned,
     'Sample Romaji Epsilon'
   );
 });
@@ -221,4 +222,38 @@ test('没有任何标题时返回 low 置信度且没有变体', () => {
   assert.equal(extraction.cleanedTitle, '');
   assert.equal(extraction.confidence, 'low');
   assert.deepEqual(extraction.variants, []);
+});
+
+test('结尾的「出处 / 规格」括号会被去掉（杂志号、页数、活动号）', () => {
+  // Gallery titles often name the magazine issue a chapter ran in. Keeping that
+  // bracket made the store keyword return 0 results.
+  const magazine = cleanTitle('[サークル名H (作者名H)] サンプル作品オメガ (サンプルマガジン Vol.54) [英訳] [DL版]', {
+    host: 'doujin.example'
+  });
+  assert.equal(magazine.cleaned, 'サンプル作品オメガ');
+  assert.ok(magazine.notes.includes('stripped-source-annotation'), JSON.stringify(magazine.notes));
+
+  // A page-count annotation on a platform post.
+  const pageCount = cleanTitle('【サンプルタグ】サンプル作品カッパのテスト（サンプルメモ：24ページ） (Sample Platform)', {
+    host: 'doujin.example'
+  });
+  assert.equal(pageCount.cleaned, 'サンプル作品カッパのテスト');
+});
+
+test('结尾括号：含数字的当注释去掉，不含数字的保留（可能是标题的一部分）', () => {
+  const result = cleanTitle('[サークル名G] Sample Romaji Title (サンプルパロディ) (サンプルイベント 2026)', {
+    host: 'doujin.example'
+  });
+  assert.equal(result.cleaned, 'Sample Romaji Title (サンプルパロディ)');
+});
+
+test('商店关键词：标点替换成空格（Melonbooks 对标点会直接返回 0 条）', () => {
+  // Measured in 2026-09: a keyword with punctuation returns 0 items on
+  // Melonbooks while the space-separated form finds the product, so the keyword
+  // sent to a store must not contain punctuation. Replacing it with a space
+  // keeps words apart (deleting it would glue them together and also return 0).
+  assert.equal(toStoreQuery('サンプル！作品 第2巻'), 'サンプル 作品 第2巻');
+  assert.equal(toStoreQuery('サンプル作品! 第2巻'), 'サンプル作品 第2巻');
+  assert.equal(toStoreQuery('サンプル作品アルファ・総集編'), 'サンプル作品アルファ 総集編');
+  assert.equal(toStoreQuery('作品名'), '作品名');
 });

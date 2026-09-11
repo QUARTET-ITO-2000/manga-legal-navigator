@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-113%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.3.0-informational)
+![Tests](https://img.shields.io/badge/tests-117%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.3.1-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 适用范围与声明
@@ -256,7 +256,7 @@ manga-legal-navigator/
 ### 测试
 
 ```bash
-node --test tests/*.test.js      # 113 项，全部离线
+node --test tests/*.test.js      # 117 项，全部离线
 npm test                         # 同上
 ```
 
@@ -314,10 +314,18 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 8. **站内跳转**：通过 `pushState` 钩子 + 0.9 秒地址轮询发现换页，然后等 DOM 静止（400 毫秒，最多 5 秒）。极少数换页很慢的站点可能先用旧内容识别一次，换好后会自动重新识别，也可以在 Popup 点「重新识别」。
 9. **方括号里的社团名**：标题形如 `[社团名 (作者)] 作品名` 时，第一个搜索变体保留方括号写法，第二个变体去掉它。
 10. **浏览器**：优先 Chrome / Chromium；Edge 应该可用；Firefox 需要 `browser.*` shim 并调整 manifest。
+11. **章节收录在杂志里**：有些同人作品是刊登在杂志上的，商店只卖**那一期杂志**（`…号 …`），而画廊页写的是章节名。两者没有共同文字，因此插件会显示「暂未找到」；搜索入口能跳到那一期杂志，但要自动匹配就等于推荐一个无法验证的商品。
 
 ---
 
 ## 变更记录
+
+**0.3.1**
+
+* 商店搜索关键词不再带标点和「出处注释」。
+  * 实测（2026-09）：关键词里带标点（例如 `サンプル！作品 第2巻`）时 Melonbooks 返回 **0 条**，换成空格分隔的形式就能搜到商品——标点会静默让搜索失败。发给商店的关键词现在会把标点替换成空格；展示给用户的标题仍保留原样，匹配打分也不受影响（匹配器本来就会去掉标点）。
+  * 结尾那种「说出处 / 规格」的括号（杂志号 `(サンプルマガジン Vol.54)`、页数 `(…ページ)`、活动号 `(C…)`）现在会在剥离卷号**之前**先去括号。以前先剥 `Vol.54` 会留下一个 `(名称 )` 的空壳括号，关键词因此搜不到任何东西。
+  * 已用你报的页面验证：其中两部现在能在 Melonbooks 命中（匹配度 100）；第三部的商店搜索入口能找到登载它的那一期杂志（插件仍显示「暂未找到」，见已知限制 11）。
 
 **0.3.0**
 
@@ -327,7 +335,7 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
   * 换页期间，页面信息请求会等新内容就绪再回答，不会再拿旧内容应付；旧卡片同时立即移除。
   * 新增 `settled` 信号：`og:url` / `canonical` 与地址栏不一致时，按「还没换好」处理，绝不拿去搜索。
   * 状态里记录产生它的文档编号（`page.scriptId`）：只有同一份文档才复用缓存；后台也只在标签页仍停在原地址时才写入状态。
-* 已按上表在真机验证，回归测试 113 项。
+* 已按上表在真机验证，回归测试 117 项。
 
 **0.2.2** — 站点根路径 / 列表页不再分析；导航栏文案不再被当成「作品页」信号。
 

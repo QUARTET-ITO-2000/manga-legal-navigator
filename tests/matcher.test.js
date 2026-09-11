@@ -44,14 +44,14 @@ test('高可信度：唯一高分结果只展示一条', () => {
 });
 
 test('测试 D：多个相似作品时给出候选列表，而不是武断选择', () => {
-  const ranked = rankCandidates(['サンプルシリーズ～海賊姫の秘宝～'], [
-    { title: 'サンプルシリーズ～海賊姫の秘宝～' },
-    { title: 'サンプルシリーズ～錬金術師の亡都～' },
+  const ranked = rankCandidates(['サンプルシリーズ～第1部～'], [
+    { title: 'サンプルシリーズ～第1部～' },
+    { title: 'サンプルシリーズ～第2部～' },
     { title: '全く関係ない作品' }
   ]);
   const verdict = classify(ranked);
   assert.ok(['high', 'high_with_alternatives', 'possible'].includes(verdict.kind));
-  assert.equal(verdict.best.title, 'サンプルシリーズ～海賊姫の秘宝～');
+  assert.equal(verdict.best.title, 'サンプルシリーズ～第1部～');
   assert.ok(verdict.candidates.length >= 1);
   assert.ok(verdict.candidates.every((item) => item.score >= 50));
 });

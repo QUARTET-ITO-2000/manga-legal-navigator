@@ -58,6 +58,20 @@ export function normalizeForMatch(text) {
     .replace(/[\p{P}\p{S}]/gu, '');
 }
 
+/**
+ * Form used as the keyword when searching a store.
+ *
+ * Store search engines are punctuation-sensitive in a way that silently returns
+ * zero results: measured in 2026-09, a keyword such as `サンプル！作品 第2巻`
+ * returned 0 items on Melonbooks, while `サンプル 作品 第2巻` found the product.
+ * Replacing punctuation and symbols with a space (instead of deleting them,
+ * which would glue words together) keeps the search working, and scores are
+ * unaffected because the matcher strips punctuation anyway.
+ */
+export function toStoreQuery(text) {
+  return collapseSpaces(normalizeText(text).replace(/[\p{P}\p{S}]+/gu, ' '));
+}
+
 const CHAPTER_PATTERNS = [
   /第\s*\d{1,4}(?:\.\d+)?\s*[話话回巻卷集章幕]/g,
   /第\s*[一二三四五六七八九十百千]+\s*[話话回巻卷集章幕]/g,

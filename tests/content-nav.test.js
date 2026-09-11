@@ -19,7 +19,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const HOME = 'https://doujin.example/';
-const GALLERY = 'https://doujin.example/g/680213/';
+const GALLERY = 'https://doujin.example/g/000123/';
 const HOME_TITLE = 'doujin.example: sample gallery site';
 const GALLERY_TITLE = 'Sample Romaji Epsilon » doujin';
 

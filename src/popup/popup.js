@@ -90,7 +90,8 @@ function diagnosticsMarkup(state) {
   if (state.reason) parts.push(`原因：${state.reason}`);
   if (state.page?.settled === false) parts.push('页面仍在切换中');
   if (state.meta.signals?.length) parts.push(`识别信号：${state.meta.signals.join('、')}`);
-  if (state.query?.variants?.length) parts.push(`搜索关键词：${state.query.variants.join(' / ')}`);
+  const searched = state.query?.searched?.length ? state.query.searched : state.query?.variants;
+  if (searched?.length) parts.push(`搜索关键词：${searched.join(' / ')}`);
   if (state.meta.headings?.length) parts.push(`页面标题元素：${state.meta.headings.join(' | ')}`);
   if (state.meta.errors?.length) parts.push(`错误：${state.meta.errors.map((item) => item.reason || item.error).join('、')}`);
   if (!parts.length) return '';

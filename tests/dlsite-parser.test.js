@@ -84,13 +84,13 @@ test('页面结构大变时会返回 ok:false（no-items-parsed），不会静�
 });
 
 test('HTML 实体（&amp;）会被正确解码', () => {
-  const block = `<li data-list_item_product_id="RJ01643391">
-    <dd class="work_name"><a href="https://www.dlsite.com/maniax/work/=/product_id/RJ01643391.html" title="W&amp;W第14話">W&amp;W第14話</a></dd>
+  const block = `<li data-list_item_product_id="RJ00000008">
+    <dd class="work_name"><a href="https://www.dlsite.com/maniax/work/=/product_id/RJ00000008.html" title="サンプル作品A&amp;B第14話">サンプル作品A&amp;B第14話</a></dd>
     <dd class="work_price_wrap"><span class="work_price"><span class="work_price_parts"><span class="work_price_base">990</span><span class="work_price_suffix">円</span></span></span></dd>
   </li>`;
   const html = `<html><head><title>検索結果</title></head><body>${'x'.repeat(4000)}<div id="search_result_list">${block}</div></body></html>`;
   const result = adapter.parseResults(html, { id: 'primary' });
   assert.equal(result.items.length, 1);
-  assert.equal(result.items[0].title, 'W&W第14話');
+  assert.equal(result.items[0].title, 'サンプル作品A&B第14話');
   assert.equal(result.items[0].price, 990);
 });

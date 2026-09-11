@@ -10,6 +10,7 @@
 import { CONFIG } from './config.js';
 import { MESSAGES, STATUS } from '../shared/protocol.js';
 import { extractWorkTitle } from './cleaner.js';
+import { toStoreQuery } from './text.js';
 import { evaluatePage } from './site-filter.js';
 import { cacheKeyFor } from './cache.js';
 import { classify, matchLabel, rankCandidates } from '../matching/matcher.js';
@@ -259,14 +260,23 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
   // together, so a subtitle or translated title alone cannot cause a false "not found".
   const searchQueries = effectiveQueries.slice(0, Math.max(1, CONFIG.search.maxVariantsToSearch));
 
+  // Store search engines are punctuation-sensitive: a keyword such as
+  // `サンプル！作品 第2巻` silently returns 0 items while `サンプル 作品 第2巻`
+  // finds the product, so the keyword actually sent to a store has punctuation
+  // replaced by spaces. The displayed title keeps its original form, and
+  // scoring is unaffected because the matcher strips punctuation before comparing.
+  const storeQueries = [...new Set(searchQueries.map((query) => toStoreQuery(query)).filter(Boolean))];
+  const queriesToSearch = storeQueries.length ? storeQueries : searchQueries;
+  state.query.searched = queriesToSearch;
+
   // Ask each store in turn: stop at DLsite when it is convincing, otherwise continue to FANZA / Melonbooks
   const storeResults = [];
   let bestOverall = null;
   for (const storeId of CONFIG.stores.enabled) {
     const storeAdapter = getAdapter(storeId);
     const queries = storeId === 'dlsite'
-      ? searchQueries
-      : searchQueries.slice(0, Math.max(1, CONFIG.search.maxVariantsForExtraStores));
+      ? queriesToSearch
+      : queriesToSearch.slice(0, Math.max(1, CONFIG.search.maxVariantsForExtraStores));
     const result = await searchStore({ adapter: storeAdapter, queries, extraction, deps });
     storeResults.push(result);
     if (result.best && (!bestOverall || result.best.score > bestOverall.score)) bestOverall = result.best;

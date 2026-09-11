@@ -244,7 +244,7 @@ test('Popup：页面能读取但没有状态时提示暂时无法识别', async 
 
 test('Popup：状态属于上一个页面时（主页→作品页）会重新识别，不会显示旧结果', async () => {
   const { elements, events } = await loadPopup({
-    tabUrl: 'https://doujin.example/g/680213/',
+    tabUrl: 'https://doujin.example/g/000123/',
     state: {
       status: 'no_result',
       page: { url: 'https://doujin.example/', host: 'doujin.example', title: 'doujin.example: sample gallery site' },
@@ -254,7 +254,7 @@ test('Popup：状态属于上一个页面时（主页→作品页）会重新识
       candidates: []
     },
     livePageInfo: {
-      url: 'https://doujin.example/g/680213/',
+      url: 'https://doujin.example/g/000123/',
       host: 'doujin.example',
       title: 'Sample Romaji Epsilon » doujin',
       scriptId: 'script-2',
@@ -262,7 +262,7 @@ test('Popup：状态属于上一个页面时（主页→作品页）会重新识
     },
     reanalyzeState: {
       status: 'ok_high',
-      page: { url: 'https://doujin.example/g/680213/', host: 'doujin.example', title: 'Sample Romaji Epsilon ... » doujin' },
+      page: { url: 'https://doujin.example/g/000123/', host: 'doujin.example', title: 'Sample Romaji Epsilon ... » doujin' },
       query: { cleanedTitle: 'サンプル作品イプシロン', source: 'h2(h2)', confidence: 'high' },
       match: {
         title: 'サンプル作品イプシロン',
@@ -285,7 +285,7 @@ test('Popup：状态属于上一个页面时（主页→作品页）会重新识
 
 test('Popup：站内跳转还没换好内容时，一直等到新页面就绪才显示结果', async () => {
   const { elements, events } = await loadPopup({
-    tabUrl: 'https://doujin.example/g/680213/',
+    tabUrl: 'https://doujin.example/g/000123/',
     // the previous analysis still holds the home page
     state: {
       status: 'no_result',
@@ -298,7 +298,7 @@ test('Popup：站内跳转还没换好内容时，一直等到新页面就绪才
     // the page is still switching: the first 3 requests answer "not ready yet"
     livePendingTimes: 3,
     livePageInfo: {
-      url: 'https://doujin.example/g/680213/',
+      url: 'https://doujin.example/g/000123/',
       host: 'doujin.example',
       title: 'Sample Romaji Epsilon ... » doujin',
       scriptId: 'script-2',
@@ -306,7 +306,7 @@ test('Popup：站内跳转还没换好内容时，一直等到新页面就绪才
     },
     reanalyzeState: {
       status: 'ok_high',
-      page: { url: 'https://doujin.example/g/680213/', host: 'doujin.example', title: 'Sample Romaji Epsilon ... » doujin' },
+      page: { url: 'https://doujin.example/g/000123/', host: 'doujin.example', title: 'Sample Romaji Epsilon ... » doujin' },
       query: { cleanedTitle: 'サンプル作品イプシロン', source: 'h2(h2)', confidence: 'high' },
       match: {
         title: 'サンプル作品イプシロン',
@@ -327,10 +327,10 @@ test('Popup：站内跳转还没换好内容时，一直等到新页面就绪才
 
 test('Popup：同一份文档的现成状态会直接复用，不重复搜索商店', async () => {
   const { elements, events } = await loadPopup({
-    tabUrl: 'https://doujin.example/g/680213/',
+    tabUrl: 'https://doujin.example/g/000123/',
     state: {
       status: 'ok_high',
-      page: { url: 'https://doujin.example/g/680213/', host: 'doujin.example', title: 'Sample Romaji Epsilon ... » doujin' },
+      page: { url: 'https://doujin.example/g/000123/', host: 'doujin.example', title: 'Sample Romaji Epsilon ... » doujin' },
       query: { cleanedTitle: 'サンプル作品イプシロン', source: 'h2(h2)', confidence: 'high' },
       match: {
         title: 'サンプル作品イプシロン',
@@ -350,8 +350,8 @@ test('Popup：同一份文档的现成状态会直接复用，不重复搜索商
 
 test('Popup：页面还在换（settled=false）时不会把中间态当成结果', async () => {
   const { elements, events } = await loadPopup({
-    tabUrl: 'https://doujin.example/g/680213/',
-    livePageInfo: { url: 'https://doujin.example/g/680213/', host: 'doujin.example', title: 'doujin.example: sample gallery site', scriptId: 'script-2', settled: false },
+    tabUrl: 'https://doujin.example/g/000123/',
+    livePageInfo: { url: 'https://doujin.example/g/000123/', host: 'doujin.example', title: 'doujin.example: sample gallery site', scriptId: 'script-2', settled: false },
     livePendingTimes: 0,
     state: null,
     reanalyzeState: null

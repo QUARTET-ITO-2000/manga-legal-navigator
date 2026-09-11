@@ -60,7 +60,7 @@ test('域名像漫画站时也会被分析', () => {
 
 test('同人志画廊站（Tags/Groups/Pages 式信息块）会被当作作品页分析', () => {
   const result = evaluatePage({
-    url: 'https://doujin.example/g/515276/',
+    url: 'https://doujin.example/g/000456/',
     host: 'doujin.example',
     title: 'サンプル作品ベータ! » doujin',
     h1: ['[サークル名A] サンプル作品ベータ!'],
@@ -102,7 +102,7 @@ test('列表页（?page=2）也不会被当成作品页', () => {
 
 test('同一站点的作品详情页仍然会被分析', () => {
   const result = evaluatePage({
-    url: 'https://doujin.example/g/680213/',
+    url: 'https://doujin.example/g/000123/',
     host: 'doujin.example',
     title: 'Sample Romaji Epsilon » doujin',
     h1: ['[Author C] Sample Romaji Epsilon [Chinese] [Digital]'],
@@ -114,10 +114,10 @@ test('同一站点的作品详情页仍然会被分析', () => {
 
 test('站内跳转中间态（地址已换、内容还是上一页）不会被当成作品页', () => {
   // Real scenario: clicking a gallery from a site home page changes the URL to
-  // /g/680213/ first while the content is still the home page. The title read at
+  // /g/000123/ first while the content is still the home page. The title read at
   // that moment belongs to the home page and must never be searched for.
   const result = evaluatePage({
-    url: 'https://doujin.example/g/680213/',
+    url: 'https://doujin.example/g/000123/',
     host: 'doujin.example',
     title: 'doujin.example: sample gallery site',
     h1: [],
@@ -130,7 +130,7 @@ test('站内跳转中间态（地址已换、内容还是上一页）不会被�
 
 test('页面内容就绪（settled=true）时按正常流程分析', () => {
   const result = evaluatePage({
-    url: 'https://doujin.example/g/680213/',
+    url: 'https://doujin.example/g/000123/',
     host: 'doujin.example',
     title: 'Sample Romaji Epsilon » doujin',
     settled: true,

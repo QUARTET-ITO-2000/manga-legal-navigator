@@ -158,12 +158,38 @@ const TRAILING_LABEL_PATTERN = new RegExp(
 const TRAILING_LATIN_BRACKET = /[\s\-–—_·•|｜]*[\[【（(]\s*[A-Za-z0-9][A-Za-z0-9 .,'&_\-]{0,24}\s*[\]】）)]/g;
 
 /**
- * Trailing translation/scanlation brackets (`[中国翻訳]`, `[甜族星人赞助汉化]`, `[个人汉化]` …).
+ * Trailing translation/scanlation brackets (`[中国翻訳]`, `[サンプル汉化组]`, `[个人汉化]` …).
  * They usually contain a scanlation group's name, which cannot be enumerated,
  * so they are matched by keyword.
  */
 const TRAILING_TRANSLATION_BRACKET =
   /[\s\-–—_·•|｜]*[\[【（(][^\[\]【】（）()]{0,24}(?:汉化|漢化|翻译|翻譯|翻訳|中文|中国語|日本語訳|个人|個人|机翻|機翻|赞助|贊助|掃圖|扫图)[^\[\]【】（）()]{0,24}[\]】）)]/g;
+
+/**
+ * A trailing bracketed block that describes where or how the work was published
+ * rather than being part of its title:
+ *   (サンプルマガジン Vol.54)  magazine issue
+ *   (…ページ)                  page count
+ *   (C…)                       event edition
+ * These are removed *before* chapter/volume numbers are stripped: stripping the
+ * volume number first leaves a dangling `(name )` behind, and a keyword with
+ * that dangling bracket makes the store search return 0 results (measured).
+ */
+const TRAILING_ANNOTATION_HINT = /\d|ページ|page|vol\.?|号|巻|収録|版/i;
+const TRAILING_BRACKET_AT_END = /[\s\-–—_·•|｜]*([\[【（(][^\[\]【】（）()]{1,60}[\]】）)])\s*$/;
+
+function stripTrailingSourceAnnotation(text) {
+  let out = collapseSpaces(text);
+  for (let i = 0; i < 3; i += 1) {
+    const match = out.match(TRAILING_BRACKET_AT_END);
+    if (!match) break;
+    if (!TRAILING_ANNOTATION_HINT.test(match[1].slice(1, -1))) break;
+    const head = collapseSpaces(out.slice(0, match.index));
+    if (meaningfulLength(head) < 2) break; // never strip the title away entirely
+    out = head;
+  }
+  return out;
+}
 
 /** Does the bracket content look like a circle/author name (Latin letters, possibly with a bracketed note) rather than a title? */
 function looksLikeCircleName(text) {
@@ -320,6 +346,20 @@ export function cleanTitle(rawTitle, options = {}) {
     }
   }
 
+  // Trailing edition/language labels are removed before the leading label is
+  // unwrapped, so a source annotation sitting in front of them
+  // (… (サンプルマガジン Vol.54) [DL版]) is still the last bracket and can be
+  // recognised as one. Stripping the volume number first would leave a dangling
+  // "(name )" behind, and a keyword with that dangling bracket makes the store
+  // search return 0 results (measured on DLsite).
+  const beforeEdition = collapseSpaces(titleSegment);
+  titleSegment = stripEditionLabels(titleSegment);
+  if (titleSegment !== beforeEdition) notes.push('stripped-edition-label');
+
+  const beforeAnnotation = collapseSpaces(titleSegment);
+  titleSegment = stripTrailingSourceAnnotation(titleSegment);
+  if (titleSegment !== beforeAnnotation) notes.push('stripped-source-annotation');
+
   const unwrapped = unwrapLeadingBracket(collapseSpaces(titleSegment));
   if (unwrapped.unwrapped && hasMeaningfulChars(unwrapped.value)) {
     const innerRest = collapseSpaces(stripChapterMarkers(unwrapped.rest));
@@ -341,10 +381,6 @@ export function cleanTitle(rawTitle, options = {}) {
   const beforeChapterStrip = collapseSpaces(titleSegment);
   titleSegment = stripChapterMarkers(titleSegment);
   if (titleSegment !== beforeChapterStrip) notes.push('stripped-chapter');
-
-  const beforeEdition = titleSegment;
-  titleSegment = stripEditionLabels(titleSegment);
-  if (titleSegment !== beforeEdition) notes.push('stripped-edition-label');
 
   const beforeBoundary = titleSegment;
   titleSegment = stripBoundaryNoise(titleSegment);

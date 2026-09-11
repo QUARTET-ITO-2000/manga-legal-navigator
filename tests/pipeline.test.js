@@ -84,6 +84,27 @@ test('核心闭环：漫画页 -> 清洗作品名 -> DLsite 搜索 -> 高分匹�
   assert.equal(calls.length, 1);
 });
 
+test('商店关键词里的标点会被替换成空格（Melonbooks 对标点直接返回 0 条）', async () => {
+  const { deps, calls } = createDeps();
+  const page = {
+    ...piratePage,
+    title: 'サンプル作品アルファ・総集編 第3話 - 免费漫画 - 某漫画网',
+    h1: [],
+    ogTitle: ''
+  };
+  const state = await analyzePage({ pageInfo: page, settings: {}, deps });
+
+  // The title shown to the user keeps its original punctuation…
+  assert.ok(state.query.cleanedTitle.includes('・'), state.query.cleanedTitle);
+  // …while the keyword sent to the stores has none.
+  assert.ok(state.query.searched.length >= 1);
+  for (const query of state.query.searched) {
+    assert.ok(!/[\p{P}\p{S}]/u.test(query), `商店关键词不该含标点：${query}`);
+  }
+  const decoded = calls.map((url) => decodeURIComponent(String(url).replace(/\+/g, ' ')));
+  assert.ok(decoded.some((url) => url.includes('サンプル作品アルファ 総集編')), decoded.join('\n'));
+});
+
 test('可能的匹配（分数 62~84）会标注匹配度并给出候选', async () => {
   const { deps } = createDeps();
   const page = {
@@ -200,7 +221,7 @@ test('第二次分析同一作品时命中缓存，不再请求 DLsite', async (
 test('调试模式（mock）可以用离线快照跑通整条链路', async () => {
   const { deps } = createDeps();
   const state = await analyzePage({
-    pageInfo: { ...piratePage, title: 'サンプル作品デルタ～海賊姫の秘宝～ 第1話 - 漫画 - 某站' },
+    pageInfo: { ...piratePage, title: 'サンプル作品デルタ～第1部～ 第1話 - 漫画 - 某站' },
     settings: {},
     deps
   });
