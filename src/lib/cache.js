@@ -7,7 +7,14 @@
 
 import { CONFIG } from './config.js';
 
-const KEY_PREFIX = 'mn:search:';
+/**
+ * Bumping this prefix invalidates every cached search result. Do it whenever a
+ * store adapter changes the shape of its items (field renamed, added, removed),
+ * otherwise the old parsed objects would keep being served from cache and the
+ * UI would show stale labels (this happened: Pixiv items lost their `store`
+ * field and the card kept saying "DLsite" until the cache expired).
+ */
+const KEY_PREFIX = 'mn:search:v2:';
 const memory = new Map();
 
 function storageArea() {
