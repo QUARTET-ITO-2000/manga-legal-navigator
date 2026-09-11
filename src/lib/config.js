@@ -86,6 +86,11 @@ export const CONFIG = {
  */
 export const DENY_HOSTS = [
   'dlsite.com',
+  'dmm.co.jp',
+  'melonbooks.co.jp',
+  'pixiv.net',
+  'fanbox.cc',
+  'fantia.jp',
   'google.com',
   'google.com.hk',
   'google.co.jp',
@@ -187,5 +192,9 @@ export const GALLERY_PAGE_SIGNALS = [
   /ジャンル\s*[:：]/, /ページ数\s*[:：]/, /収録\s*[:：]/
 ];
 
-/** URL shapes that look like a work detail page */
-export const DETAIL_URL_PATTERN = /\/(?:g|gallery|galleries|view|work|works|comic|comics|manga|book|books|read|chapter|ch|ep|episode|detail|p|post)\/[^/?#]+/i;
+/**
+ * URL shapes that look like a work detail page.
+ * `doujinshi` covers hitomi-style sites, whose detail paths look like
+ * /doujinshi/<slug>-<language>-<ids>.html.
+ */
+export const DETAIL_URL_PATTERN = /\/(?:g|gallery|galleries|view|work|works|comic|comics|manga|book|books|read|chapter|ch|ep|episode|detail|doujinshi|p|post)\/[^/?#]+/i;

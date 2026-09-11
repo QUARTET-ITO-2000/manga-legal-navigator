@@ -14,6 +14,23 @@ test('漫画站不会被跳过', () => {
   assert.equal(isDeniedHost('mangacopy.com'), false);
 });
 
+test('正版商店自己的商品页不会被重复抓取', () => {
+  for (const host of ['www.dlsite.com', 'www.dmm.co.jp', 'www.melonbooks.co.jp', 'www.pixiv.net', 'www.fanbox.cc', 'fantia.jp']) {
+    assert.equal(isDeniedHost(host), true, `${host} 是正版商店，应跳过`);
+  }
+});
+
+test('hitomi 式 /doujinshi/ 详情页会被当作作品页（此前被判成非漫画页）', () => {
+  const result = evaluatePage({
+    url: 'https://hitomi.la/doujinshi/sample-title-japanese-123456-654321.html#1',
+    host: 'hitomi.la',
+    title: 'サンプル作品アルファ-日本語-hitomi.la',
+    imageCount: 40
+  });
+  assert.equal(result.allowed, true, JSON.stringify(result.signals));
+  assert.ok(result.signals.includes('detail-like-url'));
+});
+
 test('漫画页（标题含章节号）会被分析', () => {
   const result = evaluatePage({
     url: 'https://example-reader.test/book/1/chapter/3',
