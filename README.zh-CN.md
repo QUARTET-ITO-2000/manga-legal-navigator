@@ -12,7 +12,7 @@
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
 ![Tests](https://img.shields.io/badge/tests-113%20passing-2ea44f)
 ![Version](https://img.shields.io/badge/version-0.3.0-informational)
-![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 适用范围与声明
 >
@@ -351,9 +351,9 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 
 ## 许可证
 
-本项目使用 **GNU 通用公共许可证第 3 版（GPL-3.0）**，全文见 [LICENSE](LICENSE)。
+本项目使用 **MIT 许可证**，全文见 [LICENSE](LICENSE)。
 
-简单说：你可以自由使用、研究、分享和修改这份代码，但衍生作品必须同样以 GPL-3.0 发布，并提供源代码。
+简单说：你可以自由使用、复制、修改、合并、发布、分发、再授权甚至出售这份代码，只要保留版权声明和许可证文本。
 
 ---
 

@@ -12,7 +12,7 @@ If the match is not convincing, it says **“no matching product found”** and 
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
 ![Tests](https://img.shields.io/badge/tests-113%20passing-2ea44f)
 ![Version](https://img.shields.io/badge/version-0.3.0-informational)
-![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### Scope and disclaimer
 >
@@ -351,9 +351,9 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 
 ## License
 
-Licensed under the **GNU General Public License v3.0** — see [LICENSE](LICENSE).
+Released under the **MIT License** — see [LICENSE](LICENSE).
 
-In short: you are free to use, study, share and modify this code, but derivative works must be released under the same licence and must include the source.
+In short: you may use, copy, modify, merge, publish, distribute, sublicense and sell this software, as long as the copyright notice and the licence text are kept.
 
 ---
 

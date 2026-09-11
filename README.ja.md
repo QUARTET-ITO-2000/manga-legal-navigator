@@ -12,7 +12,7 @@
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
 ![Tests](https://img.shields.io/badge/tests-113%20passing-2ea44f)
 ![Version](https://img.shields.io/badge/version-0.3.0-informational)
-![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 対象と免責
 >
@@ -351,9 +351,9 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 
 ## ライセンス
 
-本プロジェクトは **GNU General Public License v3.0（GPL-3.0）** で公開されています。全文は [LICENSE](LICENSE) を参照してください。
+本プロジェクトは **MIT ライセンス**で公開されています。全文は [LICENSE](LICENSE) を参照してください。
 
-要約すると、このコードは自由に使用・研究・共有・改変できますが、派生物は同じライセンスで公開し、ソースコードを提供する必要があります。
+要約すると、著作権表示とライセンス文を保持していれば、このコードの使用・複製・改変・統合・公開・配布・再許諾・販売が自由に行えます。
 
 ---
 
