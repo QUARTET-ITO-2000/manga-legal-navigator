@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-142%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.5.2-informational)
+![Tests](https://img.shields.io/badge/tests-143%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.5.5-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 対象と免責
@@ -134,7 +134,7 @@ Cookie を伴うのは FANZA のみで、DLsite と Melonbooks は常に資格�
 
 ### 配布アーカイブから
 
-1. `manga-dlsite-navigator-v0.3.0.zip` をダウンロードして解凍します。
+1. `manga-dlsite-navigator-v0.5.5.zip` をダウンロードして解凍します。
 2. `chrome://extensions/` を開き、右上の**デベロッパー モード**を有効にします。
 3. **パッケージ化されていない拡張機能を読み込む** をクリックし、`manifest.json` があるフォルダを選びます。
 
@@ -300,9 +300,14 @@ node tools/probe-dlsite.mjs "キーワード" --raw      # 生 HTML を出力し
 ### リリース用パッケージ
 
 ```bash
-cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
-  -x "*.DS_Store" "*/node_modules/*"
+# リポジトリのルートで実行。アーカイブは gitignore 済みの outputs/ に出力されます。
+zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
+  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" "outputs/*" "*.zip"
 ```
+
+`*.local.*` と `*/fixtures/local/*` の除外は外さないでください。ローカル専用ファイル
+（実在の作品名、手元で保存したページスナップショット）が入っており、以前はこの除外が
+狭すぎて 1 つがアーカイブに混入しました。
 
 ---
 
@@ -324,6 +329,12 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 ---
 
 ## 変更履歴
+
+**0.5.5**
+
+* **リリース用パッケージ手順の修正。** ドキュメントの `zip` コマンドはリポジトリのルートで実行する形にし、`*.local.*` と `*/fixtures/local/*` を除外します。以前の狭い除外パターンでは `docs/forbidden-names.local.txt`（検査スクリプトが使うローカルの実在作品名リスト）が配布アーカイブに混入していました。
+* チェックアウト先のパスに空白があると `tools/lint-anonymity.mjs` が無言で終了していました。入口判定を文字列連結ではなく `pathToFileURL()` による URL 比較に変更しています。修正前は何も走査しないまま「問題なし」と表示されていました。
+* インストール手順のアーカイブ名を現行版に更新し、パッケージコマンドがリポジトリのフォルダ名に依存しないようにしました。
 
 **0.5.4**
 

@@ -31,6 +31,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const ALLOWLIST_PATH = 'tools/anonymity-allowlist.txt';
 const DENYLIST_PATH = 'docs/forbidden-names.local.txt';
@@ -195,4 +196,7 @@ function main() {
   console.log(`anonymity lint: ${files.length} file(s) checked, no findings.`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main();
+// Compare through pathToFileURL(): a hand-built `file://${argv[1]}` string does
+// not match when the path contains characters such as spaces, and the script
+// would then exit silently without scanning anything.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

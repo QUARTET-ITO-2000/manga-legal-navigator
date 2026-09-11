@@ -1,6 +1,6 @@
 {
   "name": "manga-dlsite-navigator",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "private": true,
   "type": "module",
   "description": "漫画正版导航（DLsite）浏览器扩展 · MVP v0.1",

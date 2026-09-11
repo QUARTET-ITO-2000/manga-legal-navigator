@@ -10,8 +10,8 @@ If the match is not convincing, it says **“no matching product found”** and 
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-142%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.5.2-informational)
+![Tests](https://img.shields.io/badge/tests-143%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.5.5-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### Scope and disclaimer
@@ -134,7 +134,7 @@ Only FANZA requests carry cookies; DLsite and Melonbooks are always fetched with
 
 ### From a release archive
 
-1. Download and unzip `manga-dlsite-navigator-v0.3.0.zip`.
+1. Download and unzip `manga-dlsite-navigator-v0.5.5.zip`.
 2. Open `chrome://extensions/` and turn on **Developer mode** (top-right).
 3. Click **Load unpacked** and select the folder that contains `manifest.json`.
 
@@ -311,9 +311,14 @@ If you want to check the parsers against a **real** page, save the HTML you fetc
 ### Packaging a release
 
 ```bash
-cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
-  -x "*.DS_Store" "*/node_modules/*"
+# Run from the repository root; the archive lands in outputs/ (git-ignored).
+zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
+  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" "outputs/*" "*.zip"
 ```
+
+`*.local.*` and `*/fixtures/local/*` must stay in the exclusion list: they hold the
+local-only files (real titles, hand-saved page snapshots) that may never leave your
+machine, and an earlier, narrower pattern let one of them into the archive.
 
 ---
 
@@ -335,6 +340,12 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 ---
 
 ## Changelog
+
+**0.5.5**
+
+* **Release packaging fixed.** The `zip` command in the docs is now run from the repository root and excludes `*.local.*` as well as `*/fixtures/local/*`. The previous, narrower pattern let `docs/forbidden-names.local.txt` — the local list of real titles used by the anonymity linter — into the archive.
+* `tools/lint-anonymity.mjs` no longer exits silently when the checkout path contains a space: the entry-point check compares URLs built with `pathToFileURL()` instead of concatenating a `file://` string. Before the fix the linter scanned nothing and still reported success.
+* Install instructions now name the current archive, and the packaging command no longer depends on the repository folder name.
 
 **0.5.4**
 

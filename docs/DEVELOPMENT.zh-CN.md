@@ -1,4 +1,4 @@
-# 开发与实测记录（中文长文档）· 漫画正版导航 v0.3.0
+# 开发与实测记录（中文长文档）· 漫画正版导航 v0.5.5
 
 > 这份文档是**开发/实测笔记**：完整的需求对照、DLsite 真实行为、目录结构、变更记录与已知限制。
 > GitHub 首页说明请见仓库根目录的 [README.md](../README.md)（English）、[README.zh-CN.md](../README.zh-CN.md)、[README.ja.md](../README.ja.md)。
@@ -286,6 +286,13 @@ extension/
 本项目假定使用者为成年人；MVP 不做年龄验证与内容审核（需求文档 §1、§3）。
 
 ## 14. 变更记录
+
+**v0.5.5**
+
+- **打包命令修正**：文档里的 `zip` 改为在仓库根目录执行，排除项补上 `*.local.*` 与 `*/fixtures/local/*`。此前只写了 `*.local.md`，于是 `docs/forbidden-names.local.txt`（本机真实作品名清单）被打了进去——发布包一旦外传，这份清单会跟着泄露。
+- **`tools/lint-anonymity.mjs` 静默失效修复**：入口判断原本用 `file://${process.argv[1]}` 拼字符串与 `import.meta.url` 比对，而工作目录路径含空格（例如 `Codex Projects`）时两者不相等，脚本直接退出、一个文件都不扫，却依然返回成功。现改用 `pathToFileURL()`。
+- **工程目录迁移**到 `~/Documents/Codex Projects/manga`；安装说明与打包命令里的版本号、目录名同步更新（打包不再依赖目录名）。
+- 回归测试 143 项。
 
 **v0.5.4**
 

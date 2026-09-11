@@ -10,8 +10,8 @@
 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
-![Tests](https://img.shields.io/badge/tests-142%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.5.2-informational)
+![Tests](https://img.shields.io/badge/tests-143%20passing-2ea44f)
+![Version](https://img.shields.io/badge/version-0.5.5-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 适用范围与声明
@@ -134,7 +134,7 @@ FANZA 的请求使用 `credentials: 'include'`，即**复用浏览器里已有�
 
 ### 用发布包安装
 
-1. 下载并解压 `manga-dlsite-navigator-v0.3.0.zip`。
+1. 下载并解压 `manga-dlsite-navigator-v0.5.5.zip`。
 2. 打开 `chrome://extensions/`，打开右上角的**开发者模式**。
 3. 点击**加载已解压的扩展程序**，选择包含 `manifest.json` 的那一层目录。
 
@@ -300,9 +300,12 @@ node tools/probe-dlsite.mjs "キーワード" --raw      # 导出原始 HTML，�
 ### 打包发布
 
 ```bash
-cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
-  -x "*.DS_Store" "*/node_modules/*"
+# 在仓库根目录执行；压缩包输出到已被 gitignore 的 outputs/
+zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
+  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" "outputs/*" "*.zip"
 ```
+
+`*.local.*` 与 `*/fixtures/local/*` 这两条排除项不能删：它们装的是本机专用文件（真实作品名、手工保存的页面快照），一律不能外流；之前就是因为排除项写得太窄，其中一个混进了压缩包。
 
 ---
 
@@ -324,6 +327,12 @@ cd .. && zip -qr manga-dlsite-navigator-v0.3.0.zip manga-dlsite-navigator \
 ---
 
 ## 变更记录
+
+**0.5.5**
+
+* **打包命令修正。** 文档里的 `zip` 改为在仓库根目录执行，排除项补上 `*.local.*` 与 `*/fixtures/local/*`。此前的模式太窄，把 `docs/forbidden-names.local.txt`（本机真实作品名清单，供检查脚本使用）打进了发布包。
+* `tools/lint-anonymity.mjs` 在路径含空格时不再静默退出：入口判断改用 `pathToFileURL()` 生成 URL 比对，不再拼字符串。修复前它什么都不扫，却仍然报「通过」。
+* 安装说明改成当前版本的压缩包名；打包命令不再依赖仓库文件夹名。
 
 **0.5.4**
 
