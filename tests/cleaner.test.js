@@ -246,6 +246,15 @@ test('作者名结尾的消歧数字会被去掉（ra-men 171 → ra-men）', ()
   assert.deepEqual(artists, ['ra-men']);
 });
 
+test('优先使用日文标题方括号里的作者名（罗马音 slug 搜不到日本站点）', () => {
+  const artists = extractArtistNames({
+    infoText: 'Artists: ra-men 171 Languages: japanese Categories: doujinshi',
+    h2: ['[らーめん] サンプル作品アルファ! (サンプル原作)'],
+    headings: [{ tag: 'h1', level: 1, text: '[Ra-men] Sample Romaji Title' }]
+  });
+  assert.deepEqual(artists, ['らーめん']);
+});
+
 test('结尾的「出处 / 规格」括号会被去掉（杂志号、页数、活动号）', () => {
   // Gallery titles often name the magazine issue a chapter ran in. Keeping that
   // bracket made the store keyword return 0 results.

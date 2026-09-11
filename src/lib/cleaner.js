@@ -425,27 +425,52 @@ const NOT_AN_ARTIST = /^(?:original|japanese|english|chinese|translated|doujinsh
  * the same, so searching by author is what finds those works.
  */
 export function extractArtistNames(pageInfo = {}) {
+  const out = [];
+  const push = (raw) => {
+    const name = collapseSpaces(raw)
+      .replace(/^#+/, '')
+      // parenthetical notes inside the label ("Circle Name (Author)")
+      .replace(/[（(].*$/, '')
+      // gallery sites append a number to disambiguate identical slugs
+      // ("ra-men 171"), which is unsearchable elsewhere
+      .replace(/\s+\d{1,4}$/, '')
+      .trim();
+    if (name.length < 2 || name.length > 40) return;
+    if (NOT_AN_ARTIST.test(name) || /^\d+$/.test(name)) return;
+    if (out.some((item) => item.toLowerCase() === name.toLowerCase())) return;
+    out.push(name);
+  };
+
+  // 1) The Japanese name, taken from the bracketed prefix of a Japanese
+  //    heading: "[踊るロンドン] お狐様ともう一匹の妖怪" -> 踊るロンドン.
+  //    This matters because the info block's Artists/Groups fields carry the
+  //    romanised slug ("ra-men"), and searching a Japanese site with that finds
+  //    nobody.
+  const headings = [
+    ...(Array.isArray(pageInfo.h2) ? pageInfo.h2 : []),
+    ...(Array.isArray(pageInfo.h3) ? pageInfo.h3 : []),
+    ...(Array.isArray(pageInfo.headings) ? pageInfo.headings.map((item) => item?.text || '') : [])
+  ];
+  for (const heading of headings) {
+    const match = String(heading || '').match(/^\s*[\[【]\s*([^\]】]{2,40}?)\s*[\]】]/);
+    if (!match) continue;
+    if (!/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/u.test(match[1])) continue;
+    push(match[1]);
+  }
+  // Japanese names win: a Japanese site cannot be searched with a romanised one.
+  if (out.length) return out.slice(0, 2);
+
+  // 2) Fall back to the Artists/Groups fields of the info block (usually the
+  //    romanised slug).
   const infoText = String(pageInfo.infoText || '');
   if (!infoText) return [];
   const pattern = new RegExp(
     `(?:${ARTIST_LABELS})\\s*[:：]\\s*([\\s\\S]*?)(?=\\s*(?:${INFO_LABELS})\\s*[:：]|$)`,
     'gi'
   );
-  const out = [];
   for (const match of infoText.matchAll(pattern)) {
     for (const part of String(match[1]).split(/[|｜/／、,，;；]\s*/)) {
-      const name = collapseSpaces(part)
-        .replace(/^#+/, '')
-        .replace(/[（(].*$/, '')
-        // Gallery sites append a number to disambiguate identical artist slugs
-        // ("ra-men 171" for ra-men), which would make the name unsearchable on
-        // other sites — drop it.
-        .replace(/\s+\d{1,4}$/, '')
-        .trim();
-      if (name.length < 2 || name.length > 40) continue;
-      if (NOT_AN_ARTIST.test(name) || /^\d+$/.test(name)) continue;
-      if (out.some((item) => item.toLowerCase() === name.toLowerCase())) continue;
-      out.push(name);
+      push(part);
     }
   }
   return out.slice(0, 3);
