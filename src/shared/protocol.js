@@ -23,6 +23,16 @@ export const MSG = {
   SET_SETTINGS: 'MN_SET_SETTINGS',
   /** popup -> background: clear the search cache */
   CLEAR_CACHE: 'MN_CLEAR_CACHE',
+  /** popup -> background: read the QA capture state (§32 dashboard) */
+  QA_GET: 'MN_QA_GET',
+  /** popup -> background: change one QA capture (verdict / false positive / note) */
+  QA_UPDATE: 'MN_QA_UPDATE',
+  /** popup -> background: keep the current page as a test case (§13) */
+  QA_CREATE_CASE: 'MN_QA_CREATE_CASE',
+  /** popup -> background: build a QA export and hand it back for download (§8) */
+  QA_EXPORT: 'MN_QA_EXPORT',
+  /** popup -> background: delete every QA capture (§33) */
+  QA_CLEAR: 'MN_QA_CLEAR',
   /** background -> content script: state update (optional push) */
   STATE_UPDATED: 'MN_STATE_UPDATED'
 };

@@ -164,6 +164,7 @@ git clone https://github.com/<你的账号>/manga-legal-navigator.git
 | 启用插件 | 开 | 总开关。关掉后不读取页面、不发请求、不显示卡片。 |
 | 识别到作品时自动在页面显示浮窗 | 开 | 关掉后结果只出现在 Popup 里，或点「在页面显示」才出卡片。 |
 | 用作者 / 社团名兜底搜索 | 开 | 额外用页面上的作者 / 社团名再搜一轮。部分站点（尤其 Pixiv）会把作品换成别的标题存放，只搜标题会漏掉。 |
+| 人民币估算汇率（1 日元 = ? 元） | 空（用内置 0.044） | FANZA / Melonbooks 不提供人民币价格，用这里的汇率换算成「约 X 元」。留空就用内置值（Google Finance 2026-09-12 07:54，1 JPY = 0.0437 → 0.044）；DLsite 商品用商店自己给的换算，不走这里。改完会立即生效，不需要清缓存。 |
 | 使用离线示例数据（调试用） | 关 | 用 `src/stores/fixtures/` 里的示例快照跑完整流水线，不发网络请求。 |
 | 跳过「是否漫画页」判断（调试用） | 关 | 所有页面都分析，开发新商店适配器时很有用。 |
 
@@ -249,19 +250,25 @@ manga-legal-navigator/
 │   │   └── fixtures/              # 示例快照（DOM 与真实页面一致，数据是占位数据）
 │   ├── matching/matcher.js        # 相似度打分与分级
 │   ├── lib/                       # config、文本工具、清洗器、站点判断、流水线、缓存、设置
+│   ├── qa/                        # 真实环境 QA：结构指纹、捕获记录、导出与脱敏
 │   ├── shared/protocol.js         # 消息类型与状态枚举
 │   └── popup/                     # popup.html / popup.js / popup.css
 ├── tests/                         # Node 测试 + 6 个本地测试页
-├── tools/probe-dlsite.mjs         # 联网探针：打印 URL、状态、解析条目与打分
+│   └── real-world/                # 真实环境测试集（按结构分类，只有结构 + 预期）
+├── tools/probe-store.mjs          # 联网探针（--store dlsite|fanza|melonbooks|pixiv|fantia）
+├── tools/probe-dlsite.mjs         # 旧入口，转发到 probe-store --store dlsite
+├── tools/qa-*.mjs                 # QA：重放测试集 / 汇总报告 / 导入案例
+├── docs/QA.zh-CN.md               # Real-world QA 操作手册（需求书 v0.1）
 └── docs/DEVELOPMENT.zh-CN.md      # 完整的中文开发与实测笔记
 ```
 
 ### 测试
 
 ```bash
-node --test tests/*.test.js      # 142 项，全部离线
+node --test tests/*.test.js      # 183 项，全部离线
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 检查仓库里是否混进了真实商品号 / 画廊号
+node tools/qa-run.mjs            # 离线重放 tests/real-world/ 全部真实案例
 ```
 
 覆盖范围：标题清洗（含「不该被过度清洗」的反例）、匹配阈值、站点判断、商店解析（HTML 快照）、端到端流水线、卡片模板、Popup，以及站内跳转闸门（`tests/content-nav.test.js`）。
@@ -269,12 +276,17 @@ node tools/lint-anonymity.mjs    # 检查仓库里是否混进了真实商品号
 ### 联网探针
 
 ```bash
-node tools/probe-dlsite.mjs "サンプル作品名"
-node tools/probe-dlsite.mjs --title "【サンプル作品】第3話 - 免费漫画 - 示例漫画网"
-node tools/probe-dlsite.mjs "キーワード" --raw      # 导出原始 HTML，用于重新校准选择器
+node tools/probe-store.mjs --store dlsite "サンプル作品名"
+node tools/probe-store.mjs --all "キーワード" --json          # 逐家商店体检
+node tools/probe-store.mjs --title "【サンプル作品】第3話 - 免费漫画 - 示例漫画网"
+node tools/probe-store.mjs --store fanza "キーワード" --raw    # 打印片段，用于重新校准选择器
+node tools/probe-dlsite.mjs "キーワード"                       # 旧入口，等价于 --store dlsite
 ```
 
-探针会打印搜索 URL、HTTP 状态、解析到的条目数和前几名候选及其分数——商店改版时，一眼就能看出是 URL 失效还是选择器失效。
+探针会打印搜索 URL、HTTP 状态、解析到的条目数、**适配器健康度**
+（healthy / degraded / blocked / parser-broken / search-failed / no-result）和前几名候选及其分数——
+商店改版时，一眼就能看出是 URL 失效、被拦截，还是选择器失效。
+注意：HTTP 200 但解析到 0 条会被报成 `parser-broken`，绝不会被当成「这部作品不存在」。
 
 ### 本地测试页（需求文档测试 A–F）
 
@@ -297,15 +309,49 @@ node tools/probe-dlsite.mjs "キーワード" --raw      # 导出原始 HTML，�
 
 想拿**真实**页面校对解析器时，把抓下来的 HTML 放到 `src/stores/fixtures/local/` —— 这个目录已被 gitignore，真实商品数据不会进仓库。
 
+### 真实环境 QA（Real-world QA）
+
+需求书 v0.1 的 QA / Site Discovery 阶段，工具已经全部就位，完整说明见
+[`docs/QA.zh-CN.md`](docs/QA.zh-CN.md)。
+
+```text
+Popup [QA Capture] 打开      →  正常浏览测试页面
+        ↓ 每次分析后写一条结构化记录（几 KB，不含 HTML）
+Popup [PASS / FAIL / LIMITATION / 误判]  →  值得保留的页面 [Create Test Case]
+        ↓
+[Export Summary] / [Export Failed Cases] / [Export Test Case Pack]
+        ↓ 放进 qa/inbox/
+node tools/qa-report.mjs     →  qa/qa-summary.json + qa/failures/FAIL-xxx.json
+node tools/qa-import.mjs     →  tests/real-world/<分类>/RW-xxx.json（进仓库，匿名）
+                                tests/sites.local.json + qa/captures/（不进仓库）
+node tools/qa-run.mjs        →  离线重放，验证可重复执行
+```
+
+设计要点：
+
+* QA Capture **默认关闭**，普通用户不产生数据、不增加请求、看不到面板（§34）。
+* 只记录**结构化特征 + 插件处理结果**，不保存完整 HTML、图片、Cookie、正文（§7）。
+* 导出默认**脱敏**：真实标题 / 商品 ID / URL 换成占位符，只保留长度、文字系统与短哈希；
+  需要真实数据时必须显式勾选，并且只能落到 git-ignored 的 `qa/`、`tests/sites.local.json`（§9）。
+* 每次测试的导出只有几 KB，本地脚本先统计，**只有失败案例**才交给 Codex（§8、§26）。
+* 每个页面都有一个结构指纹（如 `G-H1-OG-NJ-IMG40-INFO-SPA`）和 Novelty Score，
+  用来判断这个页面是否代表一种新结构（§10–§12）。
+
+`tests/real-world/` 里已经有 13 个可直接重放的占位案例（其中 1 个已知清洗缺陷、
+1 个已知限制），第一批约 40 个真实案例的配额与现状见 `docs/QA.zh-CN.md` 第 8 节。
+
 ### 打包发布
 
 ```bash
 # 在仓库根目录执行；压缩包输出到已被 gitignore 的 outputs/
 zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
-  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" "outputs/*" "*.zip"
+  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" \
+     "outputs/*" "*.zip" "qa/*" "tests/sites.local.json"
 ```
 
-`*.local.*` 与 `*/fixtures/local/*` 这两条排除项不能删：它们装的是本机专用文件（真实作品名、手工保存的页面快照），一律不能外流；之前就是因为排除项写得太窄，其中一个混进了压缩包。
+`*.local.*`、`*/fixtures/local/*`、`qa/*`、`tests/sites.local.json` 这几条排除项不能删：
+它们装的是本机专用文件（真实作品名、手工保存的页面快照、QA 捕获与汇总），一律不能外流；
+之前就是因为排除项写得太窄，其中一个混进了压缩包。
 
 ---
 
@@ -316,7 +362,7 @@ zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
 3. **过短标题**：少于 3 个字符的关键词在 DLsite 上固定返回 0 结果，此时会退化为手动搜索入口。
 4. **匹配偏保守**：低于 62 分一律不展示，所以「只是别的商品名的一部分」的查询会显示「暂未找到」，而不是一个看起来很像的错误商品。
 5. **特殊标题格式**：网站名与作品名之间没有任何分隔符时可能清洗不干净——结果依然是「暂未找到」，不会瞎猜。
-6. **商店改版**：解析基于实测 HTML，并有快照测试兜底；万一改版，适配器会报「查询失败」，而不是静默地当作「没有结果」。用 `tools/probe-dlsite.mjs` 重新校准即可。
+6. **商店改版**：解析基于实测 HTML，并有快照测试兜底；万一改版，适配器会报「查询失败」或 `parser-broken`，而不是静默地当作「没有结果」。用 `tools/probe-store.mjs`（或旧的 `probe-dlsite.mjs`）重新校准即可。
 7. **网络环境**：部分网络无法访问这些商店，此时会提示查询失败；插件限制 900 毫秒最小间隔、缓存 30 分钟，不会给商店造成压力。
 8. **站内跳转**：通过 `pushState` 钩子 + 0.9 秒地址轮询发现换页，然后等 DOM 静止（400 毫秒，最多 5 秒）。极少数换页很慢的站点可能先用旧内容识别一次，换好后会自动重新识别，也可以在 Popup 点「重新识别」。
 9. **方括号里的社团名**：标题形如 `[社团名 (作者)] 作品名` 时，第一个搜索变体保留方括号写法，第二个变体去掉它。
@@ -327,6 +373,32 @@ zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
 ---
 
 ## 变更记录
+
+**未发布（Real-world QA 阶段，需求书 v0.1）**
+
+* **新增 QA Capture 模式**（Popup 最下方，默认关闭）：正常浏览页面即自动记录结构化页面摘要
+  （页面类型、结构指纹、标题元素、og / JSON-LD、图片数、信息块字段、SPA、提取与清洗结果、
+  商店状态、请求数、缓存命中、匹配分数）。不保存完整 HTML、图片、Cookie 或正文。
+* **结构指纹与新颖度**：`G-H1-OG-NJ-IMG40-INFO-SPA` 这样的短指纹 + Novelty Score，
+  用来判断「这个页面是否代表一种新的结构」，并自动分类到 `tests/real-world/` 的目录。
+* **测试结果记录**：Page recognition / Title extraction / Cleaning / Store search /
+  Correct match / False positive / False negative / Navigation / Request count / Cache behavior，
+  取值 `PASS` / `FAIL` / `EXPECTED_LIMITATION` / `NOT_TESTED`。
+* **本地 QA 数据闭环**：`[Create Test Case]` → `RW-nnn`；`[Export Summary] / [Export Failed Cases] /
+  [Export Test Case Pack]` 三个导出默认脱敏（占位符 + 短哈希），真实数据只能落到 git-ignored 路径。
+* **新增工具**：`tools/qa-run.mjs`（离线重放 `tests/real-world/`）、`tools/qa-report.mjs`
+  （汇总成 `qa/qa-summary.json` + `qa/failures/FAIL-xxx.json`）、`tools/qa-import.mjs`
+  （拆分为仓库案例 + 本地 URL / 页面摘要）。
+* **探针泛化**：`tools/probe-store.mjs` 支持 `--store dlsite|fanza|melonbooks|pixiv|fantia`、`--all`、
+  `--json`，并输出适配器健康度（healthy / degraded / blocked / parser-broken / search-failed / no-result）；
+  `tools/probe-dlsite.mjs` 保留为兼容入口。
+* **第一批 13 个占位测试案例**已提交（结构 + 预期，可离线重放），阶段目标约 40 个；
+  本阶段只记录问题，不改匹配算法。
+* **人民币估算汇率集中管理**：FANZA / Melonbooks 原来各自写死 `0.044` / `0.05`，
+  现在统一读 `CONFIG.currency.jpyToCny`（默认 **0.044**，来源 Google Finance
+  2026-09-12 07:54：1 JPY = 0.0437 CNY 四舍五入），并可在 Popup 设置里自行录入；
+  DLsite 仍然优先使用商店自己给出的人民币价格。换算挪到「生成卡片」阶段，
+  改汇率立即生效、无需清缓存，免费商品也不会再显示「约 1 元」。
 
 **0.5.5**
 

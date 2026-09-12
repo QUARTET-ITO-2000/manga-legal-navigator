@@ -1,0 +1,35 @@
+{
+  "id": "RW-013",
+  "category": "negative",
+  "title": "站点搜索页：URL 形态直接被跳过，0 请求",
+  "features": {
+    "pageType": "listing",
+    "h1": false,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": false,
+    "manyImages": false,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": false,
+    "storeSearch": false,
+    "correctMatch": false,
+    "maxRequests": 0
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/search?q=sample",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "搜索结果 - 示例漫画网",
+      "h1": [],
+      "imageCount": 0,
+      "textSample": "搜索结果 0 件",
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §21：搜索页面不应触发 Store 请求"
+}

@@ -76,7 +76,52 @@ export const CONFIG = {
     /** debug: use the bundled store snapshots instead of the network */
     mockMode: false,
     /** debug: skip the "is this a manga page?" check */
-    ignoreSiteFilter: false
+    ignoreSiteFilter: false,
+    /**
+     * JPY -> CNY estimate used for FANZA / Melonbooks (DLsite ships its own).
+     * Empty / null means "use CONFIG.currency.jpyToCny"; a number pins it.
+     */
+    cnyPerJpy: null,
+    /**
+     * Real-world QA capture mode (requirements doc §5 / §34). Off by default:
+     * when it is off no QA record is written and no extra request is made.
+     */
+    qaMode: false,
+    /** QA exports default to placeholders; real titles only when explicitly asked (§9) */
+    qaIncludeRealTitles: false
+  },
+  qa: {
+    /** how many captures are kept in chrome.storage.local (oldest dropped first) */
+    maxCaptures: 300,
+    /** how many observations of the same page are kept (cache / SPA evidence) */
+    maxObservations: 6,
+    /** test-result record written with every capture (requirements doc §14) */
+    /**
+     * Request budget (requirements doc §23): how many store requests one page is
+     * allowed to cause before the capture is marked as over budget.
+     */
+    requestBudget: {
+      nonWorkPage: 0,
+      workPage: 8
+    },
+    /** structure fingerprints closer than this are reported as "already covered" (§11) */
+    duplicateBand: 20
+  },
+  currency: {
+    /**
+     * JPY -> CNY estimate. It is only used for stores that do NOT ship their own
+     * CNY price in the search result (FANZA / Melonbooks); DLsite's own
+     * conversion always wins where it exists.
+     *
+     * Source: Google Finance, 2026-09-12 07:54 (1 JPY = 0.0437 CNY), rounded to
+     * 0.044. The user can override it in the popup (settings.cnyPerJpy); when
+     * that is empty this value is used.
+     */
+    jpyToCny: 0.044,
+    jpyToCnySource: 'Google Finance 2026-09-12 07:54（1 JPY = 0.0437 CNY，四舍五入为 0.044）',
+    /** accepted range for a user-entered rate; anything outside is ignored */
+    minRate: 0.001,
+    maxRate: 1
   }
 };
 

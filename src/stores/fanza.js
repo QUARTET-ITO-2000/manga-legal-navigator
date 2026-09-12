@@ -76,7 +76,12 @@ function parseItem(block) {
     originalPriceText: '',
     discountLabel: '',
     labels: [],
-    approxCny: price === null ? null : Math.max(1, Math.round(price * 0.044)),
+    /**
+     * FANZA does not publish a CNY price, so no estimate is stored here: the
+     * pipeline converts it when the card is built, using the rate from
+     * CONFIG.currency / the user's setting (src/lib/currency.js).
+     */
+    approxCny: null,
     imageUrl: '',
     store: 'fanza'
   };

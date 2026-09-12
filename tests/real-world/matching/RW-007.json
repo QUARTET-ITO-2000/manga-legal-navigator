@@ -1,0 +1,53 @@
+{
+  "id": "RW-007",
+  "category": "matching-false-positive-watch",
+  "title": "不存在的作品：占位数据下会以 78 分被判为 possible（待 Phase 2 确认）",
+  "features": {
+    "pageType": "gallery",
+    "h1": true,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": false,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "grade": "none",
+    "limitation": true,
+    "maxRequests": 8
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/comic/000005/1",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "サンプル作品オメガ 第1話 - 漫画 - 示例漫画网",
+      "h1": [
+        "サンプル作品オメガ 第1話"
+      ],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "サンプル作品オメガ 第1話"
+        }
+      ],
+      "imageCount": 20,
+      "textSample": "第1話 サンプル作品オメガ",
+      "infoText": "Tags: sample Languages: japanese Categories: doujinshi Pages: 20 Uploaded: 2026-01-01",
+      "infoFields": [
+        "tags",
+        "languages",
+        "categories",
+        "pages",
+        "uploaded"
+      ],
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "已知限制（EXPECTED_LIMITATION）：与占位商品名仅一字之差的作品会得到 78 分并被标为 possible。真实数据上需要确认这是否属于需求书 §15.5 要压制掉的 False Positive。"
+}

@@ -32,6 +32,8 @@
   let settings = null;
   let analyzing = false;
   let analyzeAgain = false;
+  /** How many times this document has been analysed (QA capture §22 / §23) */
+  let analysisCount = 0;
 
   /** Currently tracked URL (hash is ignored: an anchor jump is not a navigation) */
   let trackedHref = pageKey();
@@ -76,6 +78,7 @@
     if (!pageInfo) return null;
     // With settled=false the background does not treat the page as a work page; the popup keeps waiting
     pageInfo.settled = !navigating && !NS.extractor?.contentUrlMismatch?.();
+    pageInfo.analysisCount = analysisCount;
     return pageInfo;
   }
 
@@ -85,6 +88,8 @@
    */
   function beginNavigation() {
     navigating = true;
+    // The URL changed without a page load: this document is a SPA (§22)
+    NS.extractor?.markClientNavigation?.();
     navStartedAt = Date.now();
     lastMutationAt = navStartedAt;
     navDeadline = navStartedAt + SETTLE_MAX_WAIT_MS;
@@ -223,6 +228,7 @@
       ensureNavigationGate();
       if (navigating) await waitForNavigation();
 
+      analysisCount += 1;
       const pageInfo = collectPageInfo();
       if (!pageInfo) return;
       lastSignature = NS.extractor?.signature?.() || lastSignature;

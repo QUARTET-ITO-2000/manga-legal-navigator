@@ -1,0 +1,52 @@
+{
+  "id": "RW-006",
+  "category": "matching-similar-work",
+  "title": "相似作品：総集編 只能标为 possible，不能当成 found（占位数据）",
+  "features": {
+    "pageType": "gallery",
+    "h1": true,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": false,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "grade": "possible",
+    "maxRequests": 6
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/comic/000003/3",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "サンプル作品デルタ 総集編 第3話 - 漫画 - 示例漫画网",
+      "h1": [
+        "サンプル作品デルタ 総集編 第3話"
+      ],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "サンプル作品デルタ 総集編 第3話"
+        }
+      ],
+      "imageCount": 24,
+      "textSample": "第3話 サンプル作品デルタ 総集編",
+      "infoText": "Tags: sample Languages: japanese Categories: doujinshi Pages: 24 Uploaded: 2026-01-01",
+      "infoFields": [
+        "tags",
+        "languages",
+        "categories",
+        "pages",
+        "uploaded"
+      ],
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §20 / §15.4：相似作品必须是 possible + 候选列表，绝不能报成 found"
+}

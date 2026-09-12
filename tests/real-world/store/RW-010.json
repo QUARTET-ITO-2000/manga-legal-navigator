@@ -1,0 +1,52 @@
+{
+  "id": "RW-010",
+  "category": "store-fallback-chain",
+  "title": "DLsite 没有 → FANZA 命中；不应继续查 Melonbooks（占位数据）",
+  "features": {
+    "pageType": "gallery",
+    "h1": true,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": false,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "grade": "found",
+    "maxRequests": 3
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/comic/000004/1",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "サンプル作品F 図書室のテスト 第1話 - 漫画 - 某漫画网",
+      "h1": [
+        "サンプル作品F 図書室のテスト 第1話"
+      ],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "サンプル作品F 図書室のテスト 第1話"
+        }
+      ],
+      "imageCount": 22,
+      "textSample": "第1話 サンプル作品F 図書室のテスト",
+      "infoText": "Tags: sample Languages: japanese Categories: doujinshi Pages: 22 Uploaded: 2026-01-01",
+      "infoFields": [
+        "tags",
+        "languages",
+        "categories",
+        "pages",
+        "uploaded"
+      ],
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §23 / §30：命中后立刻停止，商店健康度必须是 healthy（而不是 no-items-parsed）"
+}

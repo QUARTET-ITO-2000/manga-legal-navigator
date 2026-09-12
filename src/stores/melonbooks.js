@@ -50,7 +50,12 @@ function parseItem(block) {
     originalPriceText: '',
     discountLabel: '',
     labels: [],
-    approxCny: price === null ? null : Math.max(1, Math.round(price * 0.05)),
+    /**
+     * Melonbooks does not publish a CNY price either; the pipeline converts it
+     * when the card is built (src/lib/currency.js), so the rate stays in one
+     * place and a rate change does not require clearing the search cache.
+     */
+    approxCny: null,
     imageUrl: '',
     store: 'melonbooks'
   };

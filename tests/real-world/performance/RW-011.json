@@ -1,0 +1,50 @@
+{
+  "id": "RW-011",
+  "category": "performance-request-budget",
+  "title": "最坏情况请求预算：商店全都没有时，一次分析最多几次请求（占位数据）",
+  "features": {
+    "pageType": "gallery",
+    "h1": true,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": false,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "grade": "none",
+    "maxRequests": 8
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/comic/000007/1",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "Romanized Untitled Draft 第1話 - 漫画 - 示例漫画网",
+      "h1": [
+        "Romanized Untitled Draft 第1話"
+      ],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "Romanized Untitled Draft 第1話"
+        }
+      ],
+      "imageCount": 18,
+      "textSample": "第1話 Romanized Untitled Draft",
+      "infoText": "Tags: sample Languages: japanese Pages: 18",
+      "infoFields": [
+        "tags",
+        "languages",
+        "pages"
+      ],
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §23：离线实测 7 次请求（DLsite 两个关键词 + がるまに + FANZA/Melonbooks/Pixiv/Fantia），预算是 8；第二次分析必须 0 请求"
+}

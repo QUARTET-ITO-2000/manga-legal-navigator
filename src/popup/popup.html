@@ -53,9 +53,58 @@
           <input type="checkbox" id="set-artist-fallback" />
           <span>用作者 / 社团名兜底搜索（Pixiv 等站点标题常与同人志不同）</span>
         </label>
+        <label class="set-row">
+          <span>人民币估算汇率（1 日元 =</span>
+          <input type="number" id="set-cny-rate" class="rate-input" step="0.0001" min="0.001" max="1" placeholder="默认 0.044" />
+          <span>元）</span>
+        </label>
+        <p class="muted small" id="cny-rate-hint"></p>
         <div class="row">
           <button class="btn ghost" id="btn-clear-cache">清除搜索缓存</button>
           <span class="muted" id="cache-info"></span>
+        </div>
+      </section>
+
+      <section class="panel" id="qa-panel">
+        <h2 class="label">QA（真实环境测试）</h2>
+        <label class="switch">
+          <input type="checkbox" id="set-qa-mode" />
+          <span>启用 QA Capture（只记录结构化摘要，不保存完整 HTML）</span>
+        </label>
+        <div id="qa-body" hidden>
+          <p class="muted small" id="qa-stats">读取中…</p>
+          <p class="muted small" id="qa-current"></p>
+          <div class="row qa-verdict" id="qa-verdict">
+            <button class="btn ghost" data-verdict="PASS">PASS</button>
+            <button class="btn ghost" data-verdict="FAIL">FAIL</button>
+            <button class="btn ghost" data-verdict="EXPECTED_LIMITATION">LIMITATION</button>
+            <button class="btn ghost" data-verdict="NOT_TESTED">清除判定</button>
+            <button class="btn ghost qa-flag" id="qa-false-positive" aria-pressed="false">误判</button>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="qa-create-case">Create Test Case</button>
+            <span class="muted small" id="qa-case-info"></span>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="qa-export-summary">Export Summary</button>
+            <button class="btn ghost" id="qa-export-failures">Export Failed Cases</button>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="qa-export-tests">Export Test Case Pack</button>
+            <button class="btn ghost" id="qa-clear">Clear QA Data</button>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="qa-copy">复制本页记录</button>
+            <span class="muted small">结构化摘要，不含 HTML；用于人工核对采集是否正常</span>
+          </div>
+          <div class="row">
+            <input type="text" id="qa-note-input" class="qa-note-input" placeholder="备注：现象 / 期望（例如「商店其实有这部作品，但关键词没搜到」）" />
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="set-qa-real" />
+            <span>导出时包含真实标题 / URL（仅本地 git-ignored 路径，勿提交）</span>
+          </label>
+          <p class="muted small" id="qa-note"></p>
         </div>
       </section>
     </main>

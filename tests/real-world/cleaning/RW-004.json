@@ -1,0 +1,48 @@
+{
+  "id": "RW-004",
+  "category": "cleaning-online-reader-suffix",
+  "title": "标题异常：[站点名] 前缀 + ' - Online Reader' 后缀（占位数据）",
+  "features": {
+    "pageType": "gallery",
+    "h1": false,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": false,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "correctMatch": true,
+    "cleanedTitle": "サンプル作品ガンマ"
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/comic/000006/2",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "[示例漫画网] サンプル作品ガンマ 第2話 - Online Reader",
+      "h1": [],
+      "headings": [
+        {
+          "level": 2,
+          "tag": "h2",
+          "text": "サンプル作品ガンマ 第2話"
+        }
+      ],
+      "imageCount": 14,
+      "textSample": "第2話 サンプル作品ガンマ を読む",
+      "infoText": "Tags: sample Languages: japanese Pages: 14",
+      "infoFields": [
+        "tags",
+        "languages",
+        "pages"
+      ],
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "已知失败（Phase 1 只记录，不改代码）：清洗器会保留 ' - Online Reader'，作品名对不上，最终 0 命中。修复后本 Case 应转绿。"
+}

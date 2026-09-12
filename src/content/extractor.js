@@ -8,6 +8,19 @@
   const NS = (globalThis.MangaNav = globalThis.MangaNav || {});
   const TEXT_SAMPLE_LENGTH = 2000;
   /**
+   * How this document got to the current URL:
+   *   'load' = the document was loaded for this URL
+   *   'spa'  = the URL changed in place (pushState / replaceState / popstate)
+   * Recorded for the QA capture (§22) and for the request-budget statistics.
+   */
+  let navigationType = 'load';
+  /**
+   * Field labels of the work info block (Tags / Languages / Pages / …).
+   * Gallery sites use different markup, so the QA fingerprint counts the labels
+   * instead of the elements (requirements doc §10 "info-block=yes").
+   */
+  const INFO_FIELD_PATTERN = /(?:^|[^a-z])(parodies|tags|groups?|languages?|categories|category|pages|artists?|circles?|characters?|uploaded|favorites?|原作|サークル|作者|タグ|ジャンル|ページ数|収録)\s*[:：]/gi;
+  /**
    * Id of this content-script instance.
    * A client-side navigation (history.pushState) keeps the content script
    * alive, while a full page load replaces it, so the background and the popup
@@ -143,6 +156,15 @@
     return '';
   }
 
+  /** Info-block field labels found on this page (empty on ordinary article pages) */
+  function infoFields(text) {
+    const found = new Set();
+    for (const match of String(text || '').matchAll(INFO_FIELD_PATTERN)) {
+      found.add(String(match[1] || '').toLowerCase().replace(/s$/, ''));
+    }
+    return [...found];
+  }
+
   /**
    * Collect every "title-like" element on the page (h1–h4, role="heading",
    * aria-level, and .title inside #info).
@@ -172,6 +194,7 @@
     const jsonLd = readJsonLd();
     const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href') || '';
     const anchors = Array.from(document.querySelectorAll('a[href]')).slice(0, 400).map((a) => textOf(a)).filter(Boolean);
+    const info = infoText();
     return {
       url: location.href,
       host: location.hostname,
@@ -195,11 +218,25 @@
       imageCount: document.images.length,
       navHint: anchors.slice(0, 80).join(' ').slice(0, 500),
       textSample: textSample(),
-      infoText: infoText(),
+      infoText: info,
+      infoFields: infoFields(info),
+      navigationType,
       scriptId: SCRIPT_ID,
       capturedAt: Date.now()
     };
   }
 
-  NS.extractor = { collect, signature, contentUrlMismatch, scriptId: SCRIPT_ID };
+  /** Called by the content script when the URL changes without a page load */
+  function markClientNavigation() {
+    navigationType = 'spa';
+  }
+
+  NS.extractor = {
+    collect,
+    signature,
+    contentUrlMismatch,
+    markClientNavigation,
+    navigationTypeOf: () => navigationType,
+    scriptId: SCRIPT_ID
+  };
 })();

@@ -13,8 +13,10 @@ import { extractWorkTitle } from './cleaner.js';
 import { toStoreQuery } from './text.js';
 import { evaluatePage } from './site-filter.js';
 import { cacheKeyFor } from './cache.js';
+import { estimateCny, resolveCnyPerJpy } from './currency.js';
 import { classify, matchLabel, rankCandidates } from '../matching/matcher.js';
 import { getAdapter } from '../stores/registry.js';
+import { classifyStoreHealth, HEALTH } from './store-health.js';
 
 const STORE_LABELS = {
   dlsite: 'DLsite',
@@ -24,7 +26,11 @@ const STORE_LABELS = {
   fantia: 'Fantia'
 };
 
-function toCandidateCard(item) {
+/**
+ * @param {object} item   parsed store item
+ * @param {number} rate   JPY -> CNY estimate, used when the store gives no CNY
+ */
+function toCandidateCard(item, rate = CONFIG.currency.jpyToCny) {
   return {
     productId: item.productId,
     title: item.title,
@@ -40,7 +46,9 @@ function toCandidateCard(item) {
     isFree: Boolean(item.isFree),
     originalPriceText: item.originalPriceText || '',
     discountLabel: item.discountLabel || '',
-    approxCny: item.approxCny ?? null,
+    // DLsite ships its own CNY price (and 0 for free items); the other stores
+    // get the estimate here, so a rate change applies to cached results too.
+    approxCny: item.approxCny ?? estimateCny(item.price, rate),
     imageUrl: item.imageUrl || '',
     score: item.score,
     scoreLabel: matchLabel(item.score),
@@ -112,6 +120,8 @@ async function searchStore({ adapter, queries, extraction, deps }) {
   let sawNotFound = false;
   let attempted = 0;
   const errors = [];
+  /** Per-step outcome, kept so the adapter's health can be judged (§30) */
+  const steps = [];
 
   const cached = await deps.cache.get(cacheKey);
   if (cached && Array.isArray(cached.items) && cached.items.length) {
@@ -127,8 +137,16 @@ async function searchStore({ adapter, queries, extraction, deps }) {
         response = await adapter.searchStep(step, deps);
       } catch (error) {
         errors.push({ step: step.id, error: String((error && error.message) || error) });
+        steps.push({ id: step.id, httpStatus: 0, ok: false, reason: 'network-error', itemCount: 0 });
         return 'error';
       }
+      steps.push({
+        id: step.id,
+        httpStatus: response.httpStatus,
+        ok: response.ok,
+        reason: response.reason,
+        itemCount: Array.isArray(response.items) ? response.items.length : 0
+      });
       if (!response.ok) {
         errors.push({ step: step.id, reason: response.reason });
         if (response.reason === 'age-check') {
@@ -186,6 +204,20 @@ async function searchStore({ adapter, queries, extraction, deps }) {
     else if (sawNotFound && !result.needsAgeCheck) await deps.cache.set(cacheKey, { items: [] });
   }
 
+  // Health of this store for this query (§30): a 200 with 0 parsed items is never
+  // reported as "this work does not exist" — it is a parser/search failure.
+  result.steps = steps;
+  result.health = result.fromCache
+    ? (collected.length ? HEALTH.HEALTHY : HEALTH.NO_RESULT)
+    : classifyStoreHealth({ steps, itemCount: collected.length });
+  /**
+   * Diagnostic only (does not change behaviour): a fresh "not found" entry can
+   * be found in the cache and still be ignored, because only entries that carry
+   * items count as a cache hit here. The QA capture records this so the negative
+   * cache can be measured in the real world before anything is changed
+   * (requirements doc §24 / §35 "record first, fix later").
+   */
+  result.cacheEntryFound = Boolean(cached);
   result.errors = errors;
   result.itemCount = collected.length;
 
@@ -282,6 +314,11 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
     url: getAdapter('pixiv').buildArtistSearchUrl(artist)
   }));
 
+  // JPY -> CNY estimate for the stores that do not publish their own CNY price
+  // (FANZA / Melonbooks). Resolved once per analysis; DLsite's own CNY wins.
+  const cnyPerJpy = resolveCnyPerJpy(settings);
+  state.meta.cnyPerJpy = cnyPerJpy;
+
   // Ask each store in turn: stop at DLsite when it is convincing, otherwise continue to FANZA / Melonbooks
   const storeResults = [];
   let bestOverall = null;
@@ -313,7 +350,11 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
     needsAgeCheck: item.needsAgeCheck,
     ageCheckUrl: item.ageCheckUrl,
     itemCount: item.itemCount,
-    match: item.best ? toCandidateCard(item.best) : null,
+    /** QA diagnostics: was this answer served from the cache, and what did the store adapter do? (§23 / §24 / §30) */
+    fromCache: Boolean(item.fromCache),
+    cacheEntryFound: Boolean(item.cacheEntryFound),
+    health: item.health || '',
+    match: item.best ? toCandidateCard(item.best, cnyPerJpy) : null,
     error: item.errors[0] ? (item.errors[0].reason || item.errors[0].error || '') : '',
     /** Stores can explain an empty result (e.g. Pixiv hides R-18 without a session). */
     note: item.kind === 'none' ? (getAdapter(item.storeId).emptyResultNote || '') : ''
@@ -347,13 +388,13 @@ export async function analyzePage({ pageInfo, settings = {}, deps }) {
 
   if (bestOverall) {
     const high = bestOverall.score >= CONFIG.matcher.high;
-    state.match = toCandidateCard(bestOverall);
+    state.match = toCandidateCard(bestOverall, cnyPerJpy);
     state.candidates = storeResults
       .flatMap((item) => item.candidates)
       .sort((a, b) => b.score - a.score)
       .filter((item, index, list) => list.findIndex((other) => other.store === item.store && other.productId === item.productId) === index)
       .slice(0, CONFIG.matcher.maxCandidates)
-      .map(toCandidateCard);
+      .map((item) => toCandidateCard(item, cnyPerJpy));
     state.status = high ? STATUS.OK_HIGH : STATUS.OK_POSSIBLE;
     state.reason = high ? 'high' : 'possible';
     state.message = high ? '找到正版商品' : '找到可能的正版商品';

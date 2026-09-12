@@ -164,6 +164,7 @@ Optional: in the extension details page, enable **Allow access to file URLs** if
 | Enable extension | on | Master switch. Off = no reading, no requests, no card. |
 | Show the card automatically | on | When off, results only appear in the popup / when you press “Show on page”. |
 | Search by author / circle as well | on | Adds a second search using the artist / circle name from the page. Some sites (Pixiv in particular) store a work under a different title, so the title search alone misses it. |
+| JPY → CNY estimate rate | empty (built-in 0.044) | FANZA / Melonbooks do not publish a CNY price, so it is estimated with this rate (“约 X 元”). Empty means the built-in value (Google Finance, 2026-09-12 07:54: 1 JPY = 0.0437 → 0.044). DLsite items keep the store's own conversion. Changes apply immediately — no need to clear the cache. |
 | Use offline sample data (debug) | off | Runs the whole pipeline against the sample HTML snapshots in `src/stores/fixtures/` — no network requests. |
 | Skip the “is this a manga page?” check (debug) | off | Analyses every page, useful when developing a new site adapter. |
 
@@ -249,19 +250,25 @@ manga-legal-navigator/
 │   │   └── fixtures/              # sample HTML snapshots (same DOM, placeholder data)
 │   ├── matching/matcher.js        # similarity scoring and grading
 │   ├── lib/                       # config, text utils, cleaner, site filter, pipeline, cache, settings
+│   ├── qa/                        # real-world QA: structure fingerprint, capture records, export + redaction
 │   ├── shared/protocol.js         # message types and status enum
 │   └── popup/                     # popup.html / popup.js / popup.css
 ├── tests/                         # Node tests + six local test pages
-├── tools/probe-dlsite.mjs         # online probe: prints URLs, status, parsed items, scores
+│   └── real-world/                # real-world test set, grouped by page structure
+├── tools/probe-store.mjs          # online probe (--store dlsite|fanza|melonbooks|pixiv|fantia)
+├── tools/probe-dlsite.mjs         # legacy entry point, forwards to probe-store --store dlsite
+├── tools/qa-*.mjs                 # QA: replay the test set / build the report / import cases
+├── docs/QA.zh-CN.md               # real-world QA manual (requirements doc v0.1)
 └── docs/DEVELOPMENT.zh-CN.md      # full Chinese development & measurement notes
 ```
 
 ### Tests
 
 ```bash
-node --test tests/*.test.js      # 142 tests, no network required
+node --test tests/*.test.js      # 183 tests, no network required
 npm test                         # same thing
 node tools/lint-anonymity.mjs    # fails if a real store/gallery identifier slipped in
+node tools/qa-run.mjs            # replays every case in tests/real-world/, offline
 ```
 
 Coverage: title cleaning (including counter-examples that must **not** be over-cleaned), matching thresholds, site filtering, store parsers against the HTML snapshots, the end-to-end pipeline, the card templates, the popup, and the client-side-navigation gate (`tests/content-nav.test.js`).
@@ -280,12 +287,14 @@ Two lists drive it, and neither contains a real name:
 ### Probes against the live stores
 
 ```bash
-node tools/probe-dlsite.mjs "サンプル作品名"
-node tools/probe-dlsite.mjs --title "【サンプル作品】第3話 - 免费漫画 - 示例漫画网"
-node tools/probe-dlsite.mjs "キーワード" --raw      # dump the raw HTML to re-calibrate the selectors
+node tools/probe-store.mjs --store dlsite "サンプル作品名"
+node tools/probe-store.mjs --all "キーワード" --json           # health check every store
+node tools/probe-store.mjs --title "【サンプル作品】第3話 - 免费漫画 - 示例漫画网"
+node tools/probe-store.mjs --store fanza "キーワード" --raw     # short HTML fragment, to re-calibrate the selectors
+node tools/probe-dlsite.mjs "キーワード"                        # legacy entry point
 ```
 
-The probe prints the search URL, HTTP status, the number of parsed items and the top candidates with their scores — so when a store redesigns its site, you can immediately see whether the URL or the selectors broke.
+The probe prints the search URL, HTTP status, the number of parsed items, the adapter **health** (healthy / degraded / blocked / parser-broken / search-failed / no-result) and the top candidates with their scores — so when a store redesigns its site you can tell whether the URL broke, the request was refused, or the selectors did. An HTTP 200 with zero parsed items is reported as `parser-broken`, never as “this work does not exist”.
 
 ### Local test pages (requirement tests A–F)
 
@@ -308,17 +317,49 @@ The pages use **sample titles** (they do not name, and are not named after, any 
 
 If you want to check the parsers against a **real** page, save the HTML you fetched into `src/stores/fixtures/local/` — that directory is git-ignored, so real product data never ends up in the repository.
 
+### Real-world QA (requirements doc v0.1)
+
+The QA / site-discovery tooling lives in `src/qa/` and `tools/qa-*.mjs`; the full
+manual (Chinese) is [`docs/QA.zh-CN.md`](docs/QA.zh-CN.md).
+
+```text
+Popup: enable [QA Capture]        →  browse the pages you want to test
+        ↓ every analysis writes one structured record (a few KB, never HTML)
+Popup: [PASS / FAIL / LIMITATION / false-positive]  →  [Create Test Case] for pages worth keeping
+        ↓
+[Export Summary] / [Export Failed Cases] / [Export Test Case Pack]
+        ↓ save into qa/inbox/
+node tools/qa-report.mjs     →  qa/qa-summary.json + qa/failures/FAIL-xxx.json
+node tools/qa-import.mjs     →  tests/real-world/<category>/RW-xxx.json (committed, anonymous)
+                               tests/sites.local.json + qa/captures/ (git-ignored, real data)
+node tools/qa-run.mjs        →  offline replay of every case, so results are repeatable
+```
+
+Design points:
+
+* QA Capture is **off by default**: no records, no extra requests and no QA UI for normal users.
+* Only structural features and the plugin's own results are stored — no HTML, images, cookies or page body.
+* Exports are **redacted by default**: titles, product ids and URLs become placeholders, while length, writing system and an 8-character hash are kept. Real data requires an explicit checkbox and a git-ignored destination (`qa/`, `tests/sites.local.json`).
+* Every page gets a structure fingerprint (e.g. `G-H1-OG-NJ-IMG40-INFO-SPA`) and a Novelty Score, so “is this a new page structure?” is answerable without reading the page.
+* A test round exports a few KB; the local script reports the numbers, and only the failures are handed to Codex.
+
+`tests/real-world/` ships 13 replayable placeholder cases (one known cleaning bug,
+one known limitation); the ~40-case budget for the first real batch is tracked in
+`docs/QA.zh-CN.md` §8.
+
 ### Packaging a release
 
 ```bash
 # Run from the repository root; the archive lands in outputs/ (git-ignored).
 zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
-  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" "outputs/*" "*.zip"
+  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" \
+     "outputs/*" "*.zip" "qa/*" "tests/sites.local.json"
 ```
 
-`*.local.*` and `*/fixtures/local/*` must stay in the exclusion list: they hold the
-local-only files (real titles, hand-saved page snapshots) that may never leave your
-machine, and an earlier, narrower pattern let one of them into the archive.
+`*.local.*`, `*/fixtures/local/*`, `qa/*` and `tests/sites.local.json` must stay in
+the exclusion list: they hold the local-only files (real titles, hand-saved page
+snapshots, QA captures and reports) that may never leave your machine, and an
+earlier, narrower pattern let one of them into the archive.
 
 ---
 
@@ -329,7 +370,7 @@ machine, and an earlier, narrower pattern let one of them into the archive.
 3. **Very short titles** (fewer than 3 characters) always return zero results on DLsite; the extension falls back to a manual search link.
 4. **Matching is deliberately conservative.** Anything below 62 points is hidden, so a query that is only *part* of another product's name shows “not found” rather than a plausible-looking wrong product.
 5. **Unusual title formats** where the site name is glued to the work name without any separator may not be cleaned perfectly — again, this ends in “not found”, never in a random guess.
-6. **Store redesigns.** Parsing is based on measured HTML and backed by snapshot tests; if a store changes its markup, the adapter reports “search failed” instead of silently claiming “no results”. Re-calibrate with `tools/probe-dlsite.mjs`.
+6. **Store redesigns.** Parsing is based on measured HTML and backed by snapshot tests; if a store changes its markup, the adapter reports “search failed” / `parser-broken` instead of silently claiming “no results”. Re-calibrate with `tools/probe-store.mjs` (or the legacy `probe-dlsite.mjs`).
 7. **Some networks cannot reach these stores.** In that case the card says the search failed; requests are rate-limited to one per 900 ms and cached for 30 minutes.
 8. **Client-side navigation** is detected via `pushState` hooks plus a 0.9 s URL poll, and the extension then waits for the DOM to settle (400 ms quiet, 5 s maximum). On an unusually slow site the first analysis may use the previous content; it re-analyses automatically once the new content lands, and the popup has a manual “Re-analyse” button.
 9. **Circle names in brackets** — for a title shaped like `[Circle Name (Author)] Work Title`, the first search variant keeps the bracketed form; the second variant drops it.
@@ -340,6 +381,17 @@ machine, and an earlier, narrower pattern let one of them into the archive.
 ---
 
 ## Changelog
+
+**Unreleased (real-world QA phase, requirements doc v0.1)**
+
+* **QA Capture mode** (bottom of the popup, off by default): while you browse, each analysis writes one structured page summary — page type, structure fingerprint, headings, og / JSON-LD, image count, info-block fields, SPA flag, extraction and cleaning results, store status, request count, cache hit, match score. No HTML, images, cookies or page body.
+* **Fingerprint + novelty score** (`G-H1-OG-NJ-IMG40-INFO-SPA`) answer “is this page a new structure?”, and the category decides which `tests/real-world/` directory a case belongs to.
+* **Test results** are recorded per case: page recognition, title extraction, cleaning, store search, correct match, false positive, false negative, navigation, request count, cache behaviour — `PASS` / `FAIL` / `EXPECTED_LIMITATION` / `NOT_TESTED`.
+* **Local QA loop**: `[Create Test Case]` assigns `RW-nnn`; the three exports (summary / failed cases / test-case pack) are redacted by default (placeholders + short hashes), and real data is only allowed into git-ignored paths.
+* **New tools**: `tools/qa-run.mjs` (offline replay of `tests/real-world/`), `tools/qa-report.mjs` (merges exports into `qa/qa-summary.json` + `qa/failures/FAIL-xxx.json`), `tools/qa-import.mjs` (splits a case pack into committed cases plus local url / page summaries).
+* **Generalised probe**: `tools/probe-store.mjs` supports `--store dlsite|fanza|melonbooks|pixiv|fantia`, `--all` and `--json`, and reports adapter health (healthy / degraded / blocked / parser-broken / search-failed / no-result); `tools/probe-dlsite.mjs` stays as a compatible entry point.
+* **13 placeholder cases committed** (structure + expectation, replayable offline); the phase target is ~40. This phase records problems and does not touch the matching algorithm.
+* **The CNY estimate now has one source of truth**: FANZA / Melonbooks used to hard-code `0.044` / `0.05`; they now read `CONFIG.currency.jpyToCny` (default **0.044**, from Google Finance 2026-09-12 07:54: 1 JPY = 0.0437 CNY, rounded) and the rate can be entered in the popup settings. DLsite keeps the store's own CNY price. The conversion moved to card-building time, so a rate change applies immediately without clearing the cache, and free items no longer show “约 1 元”.
 
 **0.5.5**
 
@@ -368,7 +420,7 @@ machine, and an earlier, narrower pattern let one of them into the archive.
   * While the page is settling, page-info requests wait for the new content instead of answering with the old one, and the previous card is removed immediately.
   * New `settled` signal: when `og:url` / `canonical` disagree with the address bar, the page is treated as “still switching” and is never searched.
   * States now carry the id of the document that produced them (`page.scriptId`); the popup reuses a cached state only for the same document, and the background only stores a state if the tab is still on that URL.
-* Verified by hand against live pages (see [Verification](#verification)) and covered by 142 tests.
+* Verified by hand against live pages (see [Verification](#verification)) and covered by the offline test suite (183 tests at the time of writing).
 
 **0.2.2** — site root / listing pages are no longer analysed; navigation-bar text no longer counts as a “work page” signal.
 

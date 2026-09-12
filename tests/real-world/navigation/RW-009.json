@@ -1,0 +1,52 @@
+{
+  "id": "RW-009",
+  "category": "spa-gallery-repeat",
+  "title": "站内连跳两次后的 Gallery 页面：标题重新识别，第二次分析命中缓存（占位数据）",
+  "features": {
+    "pageType": "gallery",
+    "h1": true,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": true,
+    "spaNavigation": true
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "grade": "found",
+    "maxRequests": 1
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/g/000002/",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "【サンプル作品アルファ】第4話 - 漫画 - 示例漫画网",
+      "h1": [
+        "サンプル作品アルファ 第4話"
+      ],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "サンプル作品アルファ 第4話"
+        }
+      ],
+      "imageCount": 44,
+      "textSample": "第4話 サンプル作品アルファ",
+      "infoText": "Tags: sample Languages: japanese Categories: doujinshi Pages: 44 Uploaded: 2026-01-01",
+      "infoFields": [
+        "tags",
+        "languages",
+        "categories",
+        "pages",
+        "uploaded"
+      ],
+      "navigationType": "spa",
+      "analysisCount": 3,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §22 / §24：A→B→C 连跳后只用 1 次商店请求，第二次分析必须命中缓存（cacheBehavior）"
+}

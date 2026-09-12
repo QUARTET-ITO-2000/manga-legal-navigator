@@ -22,3 +22,14 @@ src/stores/fixtures/local/
 
 # 本机维护的真实作品名清单（供 tools/lint-anonymity.mjs 使用），不上传
 docs/forbidden-names.local.txt
+
+# Real-world QA：真实测试页 URL（需求书 §13），只留本地
+tests/sites.local.json
+
+# Real-world QA：捕获、结果、汇总与失败包（含真实标题 / 商品 ID），只留本地
+# 注意锚定到仓库根目录：写成 `qa/` 会把扩展源码目录 src/qa/ 也一起忽略掉
+/qa/
+qa-report-*.json
+qa-summary-*.json
+qa-failures-*.json
+qa-tests-*.json

@@ -1,0 +1,53 @@
+{
+  "id": "RW-003",
+  "category": "cleaning-chapter-and-site-noise",
+  "title": "标题异常：书名号 + 第12話 + EP12 + 站点名（占位数据）",
+  "features": {
+    "pageType": "gallery",
+    "h1": true,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": false,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "correctMatch": true,
+    "cleanedTitle": "サンプル作品ゼータの物語",
+    "maxRequests": 1
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/comic/000003/12",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "【サンプル作品ゼータの物語】第12話 EP12 - 在线漫画 - 示例漫画网",
+      "h1": [
+        "サンプル作品ゼータの物語 第12話"
+      ],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "サンプル作品ゼータの物語 第12話"
+        }
+      ],
+      "imageCount": 30,
+      "textSample": "第12話 サンプル作品ゼータの物語",
+      "infoText": "Tags: sample Languages: japanese Categories: doujinshi Pages: 30 Uploaded: 2026-01-01",
+      "infoFields": [
+        "tags",
+        "languages",
+        "categories",
+        "pages",
+        "uploaded"
+      ],
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §19 标题异常清单"
+}

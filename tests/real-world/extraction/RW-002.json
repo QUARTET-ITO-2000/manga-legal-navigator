@@ -1,0 +1,51 @@
+{
+  "id": "RW-002",
+  "category": "reader-no-h1",
+  "title": "在线 Reader：没有 H1，只有 og:title + JSON-LD，标题带话数（占位数据）",
+  "features": {
+    "pageType": "reader",
+    "h1": false,
+    "ogTitle": true,
+    "jsonLd": true,
+    "galleryInfo": false,
+    "manyImages": false,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "correctMatch": true,
+    "cleanedTitle": "サンプル作品ガンマ",
+    "maxRequests": 1
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/comic/000002/2",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "サンプル作品ガンマ 第2話 - 漫画 - 示例漫画网",
+      "h1": [],
+      "h2": [
+        "サンプル作品ガンマ 第2話"
+      ],
+      "headings": [
+        {
+          "level": 2,
+          "tag": "h2",
+          "text": "サンプル作品ガンマ 第2話"
+        }
+      ],
+      "ogTitle": "サンプル作品ガンマ",
+      "jsonLdName": "サンプル作品ガンマ",
+      "jsonLdType": "Book",
+      "lang": "ja",
+      "imageCount": 14,
+      "textSample": "第2話 サンプル作品ガンマ を読む",
+      "infoText": "",
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §4 / §19：没有 H1 的页面也要靠 og:title / JSON-LD / h2 找到作品名"
+}

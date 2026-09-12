@@ -214,12 +214,25 @@ extension/
 │   │   ├── pipeline.js              # 分析流水线（不依赖 chrome API，可单测）
 │   │   ├── cache.js                 # chrome.storage.local 缓存（30 分钟 / 无结果 5 分钟）
 │   │   └── settings.js              # 设置读写
+│   ├── qa/                          # Real-world QA（需求书 v0.1）
+│   │   ├── fingerprint.js           # 结构特征 / 指纹 / Novelty Score / 分类
+│   │   ├── record.js                # QA Capture 记录 + 测试结果表 + 统计
+│   │   ├── export.js                # summary / failures / tests 三种导出 + 脱敏
+│   │   └── storage.js               # chrome.storage.local 生命周期（含 Clear）
 │   ├── shared/
 │   │   └── protocol.js              # 消息类型与状态枚举
 │   └── popup/                       # Popup 状态页（popup.html / popup.js / popup.css）
 ├── tests/                           # Node 测试 + 本地测试页
-└── tools/probe-dlsite.mjs           # 联网自检探针
+│   └── real-world/                  # 真实环境测试集（extraction / cleaning / matching / …）
+└── tools/
+    ├── probe-store.mjs              # 联网自检探针（--store … / --all / --json + 健康度）
+    ├── probe-dlsite.mjs             # 旧入口（转发到 probe-store --store dlsite）
+    ├── qa-run.mjs / qa-report.mjs / qa-import.mjs   # QA 重放 / 汇总 / 导入
+    └── lint-anonymity.mjs           # 匿名性检查
 ```
+
+> QA 阶段的完整流程（QA Capture、结构指纹、导出与脱敏、离线重放、已知问题清单）
+> 见 [`QA.zh-CN.md`](QA.zh-CN.md)。
 
 ## 9. 隐私与权限（需求文档 §15、§19）
 
@@ -241,7 +254,7 @@ extension/
 3. **短标题**：少于 3 个字符的关键词 DLsite 固定返回 0 结果；识别出的作品名很短时会走「在 DLsite 搜索」兜底。
 4. **偏保守的匹配**：`< 62` 分一律不展示。像「溺愛彼氏」这种只是别的商品名中一部分的查询会显示「暂未找到」，而不是推荐一个相似但不相关的商品（这是需求文档 §22 的取舍）。
 5. **站点标题格式特殊**：如果标题里没有分隔符、站点名和作品名连在一起（既没有括号也没有 ` - `），可能清洗不干净，导致搜索不到——此时仍旧只显示「暂未找到」，不会瞎猜。
-6. **DLsite 改版**：解析基于实测的 HTML 结构，并有兜底：快照回归测试 + 解析不到条目时会返回 `no-items-parsed` 并提示「DLsite 搜索暂时失败」，**不会静默当成「没有结果」**。改版后用 `tools/probe-dlsite.mjs` 重新校准 `src/stores/dlsite.js`。
+6. **DLsite 改版**：解析基于实测的 HTML 结构，并有兜底：快照回归测试 + 解析不到条目时会返回 `no-items-parsed` 并提示「DLsite 搜索暂时失败」，**不会静默当成「没有结果」**。改版后用 `tools/probe-store.mjs --store dlsite`（或旧的 `tools/probe-dlsite.mjs`）重新校准 `src/stores/dlsite.js`。
 7. **网络环境**：部分网络无法访问 DLsite，会显示「DLsite 搜索暂时失败」。另外插件对 DLsite 的请求遵循 900ms 最小间隔与 30 分钟缓存，避免造成压力。
 8. **站内跳转（SPA）**：点链接不刷新页面时，靠 `pushState` 钩子 + 地址轮询（0.9s）发现换页，再等 DOM 静止 400ms 才识别（v0.3.0 的「换页闸门」）。等待上限 5s：极少数站点换页特别慢时会先用当前内容识别一次，换好后会自动重识别；确实没跟上时可在 Popup 点「重新识别」。
 9. **社团名方括号**：像 `[社团名 (作者)] 作品名` 这种「方括号里是社团、后面才是作品名」的标题，第一个搜索变体仍保留方括号写法（第二个变体是去掉方括号后的作品名），个别作品会因此少搜到一个变体。

@@ -1,0 +1,59 @@
+{
+  "id": "RW-001",
+  "category": "static-gallery",
+  "title": "标准作品页：H1 + og:title + 信息块 + 40 张以上图片（占位数据）",
+  "features": {
+    "pageType": "gallery",
+    "h1": true,
+    "ogTitle": true,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": true,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "correctMatch": true,
+    "cleanedTitle": "サンプル作品アルファ",
+    "maxRequests": 1
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/g/000001/",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "【サンプル作品アルファ】第1話 - 免费漫画 - 示例漫画网",
+      "h1": [
+        "サンプル作品アルファ 第1話"
+      ],
+      "h2": [],
+      "h3": [],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "サンプル作品アルファ 第1話"
+        }
+      ],
+      "ogTitle": "サンプル作品アルファ",
+      "ogType": "article",
+      "description": "免费在线观看 サンプル作品アルファ 第1話",
+      "keywords": "漫画,免费",
+      "imageCount": 46,
+      "textSample": "第1話 サンプル作品アルファ を読む",
+      "infoText": "Parodies: original Tags: sample Languages: japanese Categories: doujinshi Pages: 46",
+      "infoFields": [
+        "parodies",
+        "tags",
+        "languages",
+        "categories",
+        "pages"
+      ],
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §18 标准页面；一条 DLsite 请求内命中，不应继续查其它商店"
+}

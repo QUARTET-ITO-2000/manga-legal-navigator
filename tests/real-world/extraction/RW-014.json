@@ -1,0 +1,42 @@
+{
+  "id": "RW-014",
+  "category": "extraction-label-info-block",
+  "title": "标签式信息块 + /cg/ 路径（hitomi 形态，占位数据）：应被识别为作品页",
+  "features": {
+    "pageType": "gallery",
+    "h1": true,
+    "ogTitle": false,
+    "jsonLd": false,
+    "galleryInfo": true,
+    "manyImages": true,
+    "spaNavigation": false
+  },
+  "expected": {
+    "pageRecognition": true
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://hitomi.example/cg/sample-title-japanese-000000.html#1",
+      "host": "hitomi.example",
+      "origin": "https://hitomi.example",
+      "title": "サンプル作品アルファ | Hitomi.la",
+      "h1": [
+        "サンプル作品アルファ"
+      ],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "サンプル作品アルファ"
+        }
+      ],
+      "imageCount": 60,
+      "textSample": "Read Online Download Gallery Info",
+      "infoText": "Group Sample Circle Type Artist CG Language japanese Series Sample Series Characters Sample Character Tags Sample Tag One Sample Tag Two",
+      "navigationType": "load",
+      "analysisCount": 1,
+      "settled": true
+    }
+  },
+  "note": "已知失败（Phase 1 只记录）：/cg/<slug>.html 不在 DETAIL_URL_PATTERN 里，且信息块标签是「Group / Type / Language / Series / Characters / Tags」这种没有冒号的写法，GALLERY_PAGE_SIGNALS 一条都不命中，只剩 manga-like-host 一个弱信号 → 判成「不像漫画作品页」。同一个站的 /doujinshi/ 形态反而正常（doujinshi 在模式里）。修复方向见 docs/QA.zh-CN.md §10.2。"
+}

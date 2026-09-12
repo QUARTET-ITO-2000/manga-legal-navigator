@@ -124,6 +124,46 @@ main { padding: 10px 12px 4px; }
 
 .row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 
+/* QA panel (requirements doc §32): secondary by design — normal users never
+   open it, because QA Capture is off unless it is switched on. */
+#qa-panel { border-style: dashed; }
+.qa-verdict { flex-wrap: wrap; }
+.qa-verdict .btn { flex: 0 0 auto; padding: 3px 8px; }
+.qa-flag[aria-pressed="true"] { border-color: #dc2626; color: #dc2626; }
+.qa-chip {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(37, 99, 235, .12);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+}
+.qa-note-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: inherit;
+  color: inherit;
+  background: transparent;
+}
+.qa-note-input:focus { outline: 1px solid var(--brand); }
+.set-row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+.set-row input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--brand); }
+.rate-input {
+  width: 72px;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-family: inherit;
+  background: transparent;
+  color: inherit;
+}
+.rate-input:focus { outline: 1px solid var(--brand); }
+
 .app-foot {
   padding: 8px 14px 12px;
   font-size: 10.5px;

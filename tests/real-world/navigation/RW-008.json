@@ -1,0 +1,46 @@
+{
+  "id": "RW-008",
+  "category": "spa-reader",
+  "title": "站内跳转（SPA）后的 Reader 页面：重新识别、请求数仍为 1（占位数据）",
+  "features": {
+    "pageType": "reader",
+    "h1": true,
+    "ogTitle": true,
+    "jsonLd": false,
+    "galleryInfo": false,
+    "manyImages": false,
+    "spaNavigation": true
+  },
+  "expected": {
+    "pageRecognition": true,
+    "storeSearch": true,
+    "grade": "found",
+    "maxRequests": 1
+  },
+  "fixture": {
+    "pageInfo": {
+      "url": "https://www.example-manga.test/comic/000008/2",
+      "host": "www.example-manga.test",
+      "origin": "https://www.example-manga.test",
+      "title": "サンプル作品ガンマ 第2話 - 漫画 - 示例漫画网",
+      "h1": [
+        "サンプル作品ガンマ 第2話"
+      ],
+      "headings": [
+        {
+          "level": 1,
+          "tag": "h1",
+          "text": "サンプル作品ガンマ 第2話"
+        }
+      ],
+      "ogTitle": "サンプル作品ガンマ",
+      "imageCount": 26,
+      "textSample": "第2話 サンプル作品ガンマ",
+      "infoText": "",
+      "navigationType": "spa",
+      "analysisCount": 2,
+      "settled": true
+    }
+  },
+  "note": "对应需求书 §22：pushState 之后 URL 变了、内容还没换的中间态不允许被识别（tests/content-nav.test.js 覆盖点击链路，这里覆盖请求数）"
+}

@@ -5,6 +5,7 @@
 
 import { MSG, STATUS } from '../shared/protocol.js';
 import { CONFIG } from '../lib/config.js';
+import { noveltyMessage } from '../qa/fingerprint.js';
 
 const els = {
   version: document.getElementById('version'),
@@ -16,6 +17,8 @@ const els = {
   setMock: document.getElementById('set-mock'),
   setIgnoreFilter: document.getElementById('set-ignore-filter'),
   setArtistFallback: document.getElementById('set-artist-fallback'),
+  setCnyRate: document.getElementById('set-cny-rate'),
+  cnyRateHint: document.getElementById('cny-rate-hint'),
   clearCache: document.getElementById('btn-clear-cache'),
   cacheInfo: document.getElementById('cache-info')
 };
@@ -24,6 +27,29 @@ let activeTabId = null;
 let currentState = null;
 let currentSettings = null;
 let currentTab = null;
+/** Built-in exchange rate + its source, as reported by the background */
+let currentCurrency = null;
+/** Latest QA dashboard payload (requirements doc §32) */
+let currentQa = null;
+
+const qaEls = {
+  mode: document.getElementById('set-qa-mode'),
+  body: document.getElementById('qa-body'),
+  stats: document.getElementById('qa-stats'),
+  current: document.getElementById('qa-current'),
+  verdict: document.getElementById('qa-verdict'),
+  falsePositive: document.getElementById('qa-false-positive'),
+  createCase: document.getElementById('qa-create-case'),
+  caseInfo: document.getElementById('qa-case-info'),
+  exportSummary: document.getElementById('qa-export-summary'),
+  exportFailures: document.getElementById('qa-export-failures'),
+  exportTests: document.getElementById('qa-export-tests'),
+  copy: document.getElementById('qa-copy'),
+  noteInput: document.getElementById('qa-note-input'),
+  clear: document.getElementById('qa-clear'),
+  real: document.getElementById('set-qa-real'),
+  note: document.getElementById('qa-note')
+};
 
 /** Retry cadence while waiting for a new page (a client-side navigation has to swap its content first) */
 const RETRY_MS = 350;
@@ -321,6 +347,7 @@ async function waitForLivePage() {
 async function loadSettings() {
   const response = await send({ type: MSG.GET_SETTINGS });
   currentSettings = response?.settings || null;
+  currentCurrency = response?.currency || null;
   if (response?.version) els.version.textContent = `DLsite · v${response.version}`;
   if (response?.cache) els.cacheInfo.textContent = `缓存 ${response.cache.entries} 条`;
   if (currentSettings) {
@@ -329,6 +356,184 @@ async function loadSettings() {
     els.setMock.checked = Boolean(currentSettings.mockMode);
     els.setIgnoreFilter.checked = Boolean(currentSettings.ignoreSiteFilter);
     els.setArtistFallback.checked = currentSettings.artistFallback !== false;
+    renderCnyRate();
+    setChecked(qaEls.mode, currentSettings.qaMode === true);
+    setChecked(qaEls.real, currentSettings.qaIncludeRealTitles === true);
+    if (qaEls.body) qaEls.body.hidden = currentSettings.qaMode !== true;
+  }
+}
+
+/** These elements may be missing in the test stubs, so every write is guarded */
+function setChecked(element, value) {
+  if (element) element.checked = Boolean(value);
+}
+
+function setText(element, value) {
+  if (element) element.textContent = String(value ?? '');
+}
+
+function setPressed(element, value) {
+  if (!element) return;
+  if (typeof element.setAttribute === 'function') element.setAttribute('aria-pressed', value ? 'true' : 'false');
+}
+
+/**
+ * Rate row: an empty input means "follow the built-in rate". The hint always
+ * shows what is actually in effect, because the numbers on the card depend on it.
+ */
+function renderCnyRate() {
+  if (!els.setCnyRate) return;
+  const fallback = Number(currentCurrency?.jpyToCny) || 0.044;
+  const custom = Number(currentSettings?.cnyPerJpy);
+  const active = Number.isFinite(custom) && custom > 0 ? custom : fallback;
+  els.setCnyRate.value = Number.isFinite(custom) && custom > 0 ? String(custom) : '';
+  els.setCnyRate.placeholder = `默认 ${fallback}`;
+  setText(
+    els.cnyRateHint,
+    `当前：1 日元 ≈ ${active} 元${Number.isFinite(custom) && custom > 0 ? '（自定义）' : `（默认，来源：${currentCurrency?.source || '内置'}）`}`
+      + ' · DLsite 商品用商店自己的换算，不走这里'
+  );
+}
+
+/**
+ * QA dashboard (requirements doc §32). The whole block is hidden unless QA
+ * Capture is on, so ordinary users never see it (§34).
+ */
+function renderQa(qa) {
+  if (!qa) return;
+  currentQa = qa;
+  setChecked(qaEls.mode, qa.enabled === true);
+  setChecked(qaEls.real, qa.includeRealTitles === true);
+  if (qaEls.body) qaEls.body.hidden = qa.enabled !== true;
+  if (!qa.enabled) return;
+
+  const summary = qa.summary || {};
+  setText(qaEls.stats, `Captured ${summary.total || 0} · New ${summary.newStructures || 0} · Pass ${summary.pass || 0} · Fail ${summary.fail || 0} · Limitation ${summary.expectedLimitation || 0}`);
+
+  const capture = qa.current;
+  // A QA failure must be visible: otherwise the counter just stays at 0 (§28)
+  const notes = [];
+  if (qa.error) notes.push(`⚠️ QA 面板出错：${qa.error}`);
+  if (qa.lastError) {
+    notes.push(`⚠️ 最近一次 QA 记录失败：${qa.lastError.message}（${qa.lastError.context?.origin || ''} ${qa.lastError.context?.stage || ''}）`);
+  }
+  const errorNote = notes.join(' · ');
+  if (!capture) {
+    const hint = qa.last ? `（最近一次：${qa.last.id} · ${qa.last.fingerprint}）` : '';
+    setText(qaEls.current, `当前页面还没有 QA 记录${hint}：切换一次页面或点「重新识别」即可捕获。`);
+    setText(qaEls.caseInfo, '');
+    // The verdict buttons act on the current page only, so they are hidden
+    // rather than silently applying to another page's capture.
+    if (qaEls.verdict) qaEls.verdict.hidden = true;
+    if (qaEls.createCase) qaEls.createCase.disabled = true;
+    setText(qaEls.falsePositive, '误判');
+    setPressed(qaEls.falsePositive, false);
+    setText(qaEls.note, errorNote);
+    return;
+  }
+
+  if (qaEls.verdict) qaEls.verdict.hidden = false;
+  if (qaEls.createCase) qaEls.createCase.disabled = false;
+  const novelty = capture.novelty || {};
+  const verdict = capture.verdict && capture.verdict !== 'NOT_TESTED' ? capture.verdict : '未判定';
+  setText(
+    qaEls.current,
+    `${capture.id} · ${capture.fingerprint} · novelty ${novelty.score ?? '?'}（${novelty.verdict || ''}）· ${verdict}`
+  );
+  setText(qaEls.falsePositive, capture.match?.falsePositive ? '误判：已标记' : '误判');
+  setPressed(qaEls.falsePositive, capture.match?.falsePositive === true);
+  if (qaEls.noteInput) qaEls.noteInput.value = capture.note || '';
+  setText(qaEls.caseInfo, qa.currentIsCase ? '已加入测试集' : '');
+  setText(
+    qaEls.note,
+    `${errorNote ? `${errorNote} · ` : ''}${noveltyMessage(novelty.score ?? 0)} 页面识别：${capture.results?.pageRecognition || ''} · 请求 ${capture.requests?.total ?? 0} 次${capture.requests?.cacheHit ? '（缓存命中）' : ''}`
+  );
+}
+
+async function loadQa() {
+  if (!qaEls.mode) return;
+  try {
+    const response = await send({ type: MSG.QA_GET, tabId: activeTabId });
+    if (response?.error) {
+      // Never leave a QA failure silent: show it in the panel itself
+      setText(qaEls.note, `⚠️ QA 状态读取失败：${response.error}`);
+      console.warn('[manga-nav] QA_GET failed:', response.error);
+      return;
+    }
+    renderQa(response?.qa);
+  } catch {
+    /* QA is an optional tool: never break the popup */
+  }
+}
+
+/**
+ * Hand a QA export to the browser's download list. The file is produced by the
+ * service worker and saved by the user (default: ~/Downloads); the local tools
+ * then read it from qa/inbox (requirements doc §8 / §26).
+ */
+function downloadJson(fileName, text) {
+  const blob = new Blob([text], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  const host = document.body || document.documentElement;
+  if (host?.appendChild) host.appendChild(anchor);
+  anchor.click();
+  if (anchor.remove) anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+async function exportQa(kind) {
+  const response = await send({ type: MSG.QA_EXPORT, kind, includeRealTitles: qaEls.real?.checked === true });
+  const payload = response?.export;
+  if (!payload?.json) {
+    setText(qaEls.note, '导出失败，请重试。');
+    return;
+  }
+  downloadJson(payload.fileName, payload.json);
+  const size = Math.max(1, Math.round(payload.bytes / 1024));
+  setText(qaEls.note, `已导出 ${payload.fileName}（约 ${size} KB）。放到 qa/inbox 后运行 node tools/qa-report.mjs 汇总。`);
+}
+
+async function updateQa(patch) {
+  const pageKey = currentQa?.current?.pageKey;
+  if (!pageKey) return;
+  // A popup has no `sender.tab`, so it tells the background which tab it shows
+  const response = await send({ type: MSG.QA_UPDATE, pageKey, tabId: activeTabId, ...patch });
+  if (response?.qa) renderQa(response.qa);
+  else await loadQa();
+}
+
+/**
+ * Put the current page's QA record on the clipboard, so the *capture itself*
+ * can be checked by hand before judging it (a record can look wrong because the
+ * extension misread the page — different problem from a bad match).
+ */
+async function copyCurrentCapture() {
+  const capture = currentQa?.current;
+  if (!capture) {
+    setText(qaEls.note, '当前页面还没有记录，先点「重新识别」。');
+    return;
+  }
+  const json = JSON.stringify(capture, null, 2);
+  try {
+    await navigator.clipboard.writeText(json);
+    setText(qaEls.note, `已复制 ${capture.id} 的结构化记录（${Math.max(1, Math.round(json.length / 1024))} KB，不含 HTML）。`);
+    return;
+  } catch {
+    /* no clipboard permission (or a test stub): fall through to the textarea */
+  }
+  try {
+    const area = document.createElement('textarea');
+    area.value = json;
+    (document.body || document.documentElement)?.appendChild?.(area);
+    area.select?.();
+    document.execCommand?.('copy');
+    area.remove?.();
+    setText(qaEls.note, '已复制本页 QA 记录。');
+  } catch {
+    setText(qaEls.note, '复制失败，请改用 [Export Test Case Pack] 后查看 qa/captures/。');
   }
 }
 
@@ -419,6 +624,7 @@ document.addEventListener('click', async (event) => {
     els.resultBody.innerHTML = '<p class="muted">正在重新识别…</p>';
     await loadState({ reanalyze: true });
     if (currentState) await notifyContent({ state: currentState, force: true, settings: currentSettings });
+    await loadQa();
   } else if (action === 'show-card') {
     await notifyContent({ state: currentState, force: true, settings: currentSettings });
     window.close();
@@ -448,6 +654,139 @@ els.clearCache.addEventListener('click', async () => {
 });
 
 /**
+ * Exchange-rate row (¥ -> 元 estimate for FANZA / Melonbooks).
+ * Re-analysing after a change is cheap: the store responses come from the cache,
+ * only the card is rebuilt with the new rate.
+ */
+if (els.setCnyRate) {
+  els.setCnyRate.addEventListener('change', async () => {
+    const raw = String(els.setCnyRate.value || '').trim();
+    let patch;
+    if (!raw) {
+      patch = { cnyPerJpy: null }; // empty = follow the built-in rate
+    } else {
+      const value = Number(raw);
+      if (!Number.isFinite(value) || value < 0.001 || value > 1) {
+        setText(els.cnyRateHint, '⚠️ 请输入 0.001 ~ 1 之间的数字（1 日元合多少元），留空则用默认汇率。');
+        renderCnyRate();
+        return;
+      }
+      patch = { cnyPerJpy: value };
+    }
+    const response = await send({ type: MSG.SET_SETTINGS, patch });
+    currentSettings = response?.settings || currentSettings;
+    renderCnyRate();
+    await loadState({ reanalyze: true });
+    if (currentState) await notifyContent({ state: currentState, force: true, settings: currentSettings });
+  });
+}
+
+/**
+ * QA Capture controls (requirements doc §5, §14, §32).
+ * Everything here is optional: with QA mode off none of it is reachable and no
+ * QA record is written (§34).
+ */
+if (qaEls.mode) {
+  qaEls.mode.addEventListener('change', async () => {
+    const enabled = qaEls.mode.checked;
+    const response = await send({ type: MSG.SET_SETTINGS, patch: { qaMode: enabled } });
+    currentSettings = response?.settings || currentSettings;
+    if (qaEls.body) qaEls.body.hidden = !enabled;
+    if (enabled) {
+      // Capture the page that is already open. Re-analysing is the cheapest way
+      // to produce the record, and a warm cache means no extra store request.
+      await loadState({ reanalyze: true });
+      await notifyContent({ settings: currentSettings, force: true });
+    }
+    await loadQa();
+  });
+}
+
+if (qaEls.real) {
+  qaEls.real.addEventListener('change', async () => {
+    const response = await send({ type: MSG.SET_SETTINGS, patch: { qaIncludeRealTitles: qaEls.real.checked } });
+    currentSettings = response?.settings || currentSettings;
+  });
+}
+
+if (qaEls.verdict) {
+  qaEls.verdict.addEventListener('click', async (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const verdict = target?.closest('[data-verdict]')?.getAttribute('data-verdict');
+    if (!verdict) return;
+    await updateQa({ verdict });
+  });
+}
+
+if (qaEls.falsePositive) {
+  qaEls.falsePositive.addEventListener('click', async () => {
+    const next = !(currentQa?.current?.match?.falsePositive === true);
+    await updateQa({ falsePositive: next });
+  });
+}
+
+if (qaEls.createCase) {
+  qaEls.createCase.addEventListener('click', async () => {
+    const pageKey = currentQa?.current?.pageKey;
+    if (!pageKey) {
+      setText(qaEls.caseInfo, '当前页面还没有记录。');
+      return;
+    }
+    const response = await send({ type: MSG.QA_CREATE_CASE, pageKey, tabId: activeTabId });
+    if (response?.error) {
+      setText(qaEls.caseInfo, '创建失败，请重新识别后再试。');
+      return;
+    }
+    if (response?.qa) renderQa(response.qa);
+    setText(qaEls.caseInfo, `已创建 ${response?.case?.id || ''}`);
+  });
+}
+
+for (const [element, kind] of [
+  [qaEls.exportSummary, 'summary'],
+  [qaEls.exportFailures, 'failures'],
+  [qaEls.exportTests, 'tests']
+]) {
+  if (element) element.addEventListener('click', () => exportQa(kind));
+}
+
+if (qaEls.copy) qaEls.copy.addEventListener('click', () => copyCurrentCapture());
+
+/**
+ * The note is where a human writes *why* a capture is abnormal (requirements
+ * doc §14 / §15.6: a false negative is allowed, but the reason must be
+ * recorded). It is saved on blur / Enter and travels with the test case.
+ */
+if (qaEls.noteInput) {
+  qaEls.noteInput.addEventListener('change', async () => {
+    if (!currentQa?.current) return;
+    await updateQa({ note: qaEls.noteInput.value || '' });
+  });
+  qaEls.noteInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') qaEls.noteInput.blur?.();
+  });
+}
+
+if (qaEls.clear) {
+  // Two steps: QA data is only local, but re-collecting it is manual work.
+  let armed = false;
+  qaEls.clear.addEventListener('click', async () => {
+    if (!armed) {
+      armed = true;
+      qaEls.clear.textContent = '再点一次确认清除';
+      setTimeout(() => { armed = false; qaEls.clear.textContent = 'Clear QA Data'; }, 2500);
+      return;
+    }
+    armed = false;
+    qaEls.clear.textContent = 'Clear QA Data';
+    const response = await send({ type: MSG.QA_CLEAR, tabId: activeTabId });
+    if (response?.qa) renderQa(response.qa);
+    else await loadQa();
+    setText(qaEls.note, 'QA 数据已清除。');
+  });
+}
+
+/**
  * The background broadcasts a state whenever an analysis finishes. If the popup
  * is open while the user has just moved to a new page (it may be showing
  * "analysing…" or the previous result), this refresh turns it into the new
@@ -466,6 +805,7 @@ if (chrome.runtime?.onMessage?.addListener) {
       currentState = state;
       renderPage(state, tab);
       renderResult(state);
+      loadQa();
     }).catch(() => {});
   });
 }
@@ -473,4 +813,5 @@ if (chrome.runtime?.onMessage?.addListener) {
 (async function main() {
   await loadSettings();
   await loadState();
+  await loadQa();
 })();

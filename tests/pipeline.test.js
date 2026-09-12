@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { analyzePage } from '../src/lib/pipeline.js';
+import { CONFIG } from '../src/lib/config.js';
 import { STATUS } from '../src/shared/protocol.js';
 
 /**
@@ -385,4 +386,50 @@ test('DLsite / FANZA 都没有时，最后会在 Melonbooks 上找到', async ()
   assert.ok(state.match.url.includes('product_id=1000001'));
   assert.ok(calls.some((url) => url.includes('melonbooks')), '应该查过 Melonbooks');
   assert.equal(state.searchUrls.length, 3, '没找到时每个商店都应给出搜索入口');
+});
+
+/**
+ * JPY -> CNY estimate.
+ * DLsite ships its own CNY price in the search HTML; FANZA / Melonbooks do not,
+ * so the pipeline converts them with CONFIG.currency (or the user's rate).
+ */
+const melonOnlyPage = {
+  url: 'https://doujin.example/g/000001/',
+  host: 'doujin.example',
+  title: 'サンプル作品F 図書室のテスト 第1話 - 漫画 - 某漫画网',
+  h1: [],
+  infoText: 'Parodies: original Tags: big breasts Languages: japanese Categories: doujinshi Pages: 46',
+  imageCount: 46
+};
+
+test('人民币估算：Melonbooks 用 CONFIG.currency 的默认汇率（¥990 -> 44 元）', async () => {
+  const { deps } = createDeps({ onlyKeyword: '存在しない', fanza: 'none' });
+  const state = await analyzePage({ pageInfo: melonOnlyPage, settings: {}, deps });
+  assert.equal(state.match.store, 'melonbooks');
+  assert.equal(state.meta.cnyPerJpy, CONFIG.currency.jpyToCny);
+  assert.equal(state.match.approxCny, 44);
+});
+
+test('人民币估算：用户自定义汇率立即生效，缓存的结果也不用清', async () => {
+  const { deps } = createDeps({ onlyKeyword: '存在しない', fanza: 'none' });
+  const first = await analyzePage({ pageInfo: melonOnlyPage, settings: {}, deps });
+  // Same deps (same cache) — the store result is cached, only the card changes
+  const second = await analyzePage({ pageInfo: melonOnlyPage, settings: { cnyPerJpy: 0.05 }, deps });
+  assert.equal(first.match.approxCny, 44);
+  assert.equal(second.match.approxCny, 50);
+  assert.equal(second.meta.cnyPerJpy, 0.05);
+});
+
+test('人民币估算：免费商品不会被算成「约 1 元」', async () => {
+  const { deps } = createDeps({ onlyKeyword: '存在しない', fanza: 'none' });
+  // 同一个快照，只把价格改成 0 円
+  deps.fetchText = ((original) => async (url, options) => {
+    const response = await original(url, options);
+    if (/melonbooks\.co\.jp/.test(url)) return { ...response, text: response.text.replace('&yen;990', '&yen;0') };
+    return response;
+  })(deps.fetchText);
+  const state = await analyzePage({ pageInfo: melonOnlyPage, settings: {}, deps });
+  assert.equal(state.match.store, 'melonbooks');
+  assert.equal(state.match.isFree, true);
+  assert.equal(state.match.approxCny, 0);
 });
