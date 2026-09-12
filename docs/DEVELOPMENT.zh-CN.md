@@ -1,4 +1,4 @@
-# 开发与实测记录（中文长文档）· 漫画正版导航 v0.5.5
+# 开发与实测记录（中文长文档）· 漫画正版导航
 
 > 这份文档是**开发/实测笔记**：完整的需求对照、DLsite 真实行为、目录结构、变更记录与已知限制。
 > GitHub 首页说明请见仓库根目录的 [README.md](../README.md)（English）、[README.zh-CN.md](../README.zh-CN.md)、[README.ja.md](../README.ja.md)。
@@ -163,7 +163,7 @@
 ## 7. 测试与自检
 
 ```bash
-# 单元测试 + 端到端流水线测试（用示例快照驱动，共 142 项）
+# 单元测试 + 端到端流水线测试（用示例快照驱动，全部离线）
 node --test tests/*.test.js
 
 # 联网实测：验证 DLsite 的 URL 与解析是否仍然成立
@@ -242,8 +242,8 @@ extension/
 - 权限说明：
   - `storage`：保存设置与搜索结果缓存
   - `activeTab`：Popup 打开时读取当前标签页，用于展示状态与重新识别
-  - `host_permissions: https://www.dlsite.com/*`、`https://www.dmm.co.jp/*`、`https://www.melonbooks.co.jp/*`：抓取这三家商店的公开搜索页（content script 受 CORS 限制，必须由后台发起）
-  - 只有 FANZA 的请求会带上浏览器已有的 Cookie（为了复用年龄确认状态）；DLsite / Melonbooks 的请求不带 Cookie，也不会登录任何账号
+  - `host_permissions`：`https://www.dlsite.com/*`、`https://www.dmm.co.jp/*`、`https://www.melonbooks.co.jp/*`、`https://www.pixiv.net/*`、`https://fantia.jp/*`：抓取这些商店的公开搜索页（content script 受 CORS 限制，必须由后台发起）
+  - FANZA / Pixiv / Fantia 的请求会带上浏览器已有的 Cookie（分别为了复用年龄确认状态、登录状态）；DLsite / Melonbooks 的请求不带 Cookie，也不会登录任何账号
   - content script 匹配 `http/https/file`：这是「读取当前页面」的必需项，安装时 Chrome 会提示「读取和更改您在所有网站上的数据」
 - 明确不做（§19）：不登录 DLsite、不取用户密码、不改网页表单、不自动购买/下载、不绕过访问限制/DRM/验证码
 
@@ -278,11 +278,27 @@ extension/
 | 插件不会明显影响原网页阅读 | ✅ 右下角小卡片，可收起/关闭，`pointer-events` 隔离，不参与页面布局 |
 | README 包含安装和测试方法 | ✅ 本文档 §1、§3、§7 |
 
-## 12. 后续版本方向（本 MVP 未实现）
+## 12. 后续方向（还没做）
 
-- v0.2：作者/Circle 辅助匹配、ISBN 辅助匹配、更细致的标题清洗、多候选交互
-- v0.3：折扣与活动信息、商品封面、更丰富的商品信息
-- v0.4：AI 辅助作品识别（尤其解决中文译名）、多正版平台（BookWalker / Amazon / Kobo，只需新增 `src/stores/*.js` 并注册到 `registry.js`）、价格比较
+> 这一节**只列「还没做」的方向，不绑定版本号**：版本号只出现在变更记录里，
+> 用来标记**已经发布的事实**；没实现的东西不承诺落在哪个版本。
+
+- 更多商店（BookWalker、Amazon、Kobo…）：实现 `src/stores/store-adapter.js` 并在 `registry.js` 注册即可。
+- ISBN 辅助匹配，提升召回率。
+- 商品封面：解析层已经拿到 `imageUrl`，但卡片 / Popup 还没渲染。
+- AI 辅助作品识别（尤其解决中文译名）：需求文档不把 LLM 放在每次识别的必经路径上，若要做只能做成可选的显式动作。
+- 「网站名和作品名连在一起」这类标题的清洗。
+- 可选的中日文译名反查，让译名也能命中。
+- Firefox 版本。
+
+### 原计划里已经实现的部分（保留备查）
+
+早期把下面这些写进了「后续版本方向」，实际上已经落地，所以不再列为待办：
+
+- **作者 / 社团名辅助匹配**：以手动入口的形式实现（Pixiv 作者链接 + 「用作者 / 社团名兜底搜索」开关）。
+- **多商店检索与价格并列**：DLsite / FANZA / Melonbooks / Pixiv / Fantia，见 §15。
+- **多候选交互**：命中不唯一时列出候选（最多 3 个）。
+- **折扣与活动信息**：DLsite 的折扣标签与划线原价。
 
 ## 13. 开发提示
 
@@ -300,11 +316,27 @@ extension/
 
 ## 14. 变更记录
 
+**v0.6.0**
+
+- **真实环境 QA（Phase 1）**：新增默认关闭的 QA Capture（结构化摘要 + 结构指纹 + Novelty Score）、
+  Popup 的 QA 面板（判定 / 误判 / Create Test Case / 三种脱敏导出 / 清空）、
+  以及 `tools/qa-run.mjs`（离线重放 `tests/real-world/`）、`tools/qa-report.mjs`
+  （汇总成 `qa/qa-summary.json` + `qa/failures/FAIL-xxx.json`）、`tools/qa-import.mjs`；
+  探针泛化为 `tools/probe-store.mjs`（`--store` / `--all` / `--json` + 适配器健康度）。
+  本阶段只记录问题、不改匹配算法，样本台账见 `docs/QA.zh-CN.md` §10.2。
+- **人民币估算汇率集中管理**：FANZA / Melonbooks 原来各自写死 `0.044` / `0.05`，
+  现在统一读 `CONFIG.currency.jpyToCny`（默认 0.044，来源 Google Finance 2026-09-12 07:54），
+  并可在 Popup 设置里自行录入；DLsite 仍优先使用商店自己给的人民币价格。
+  换算挪到生成卡片阶段，改汇率立即生效、无需清缓存，免费商品不再显示「约 1 元」。
+- **文档与实现对齐**：后续方向条目不再挂版本号；商店清单 / `host_permissions` 补全为 5 家；
+  「只有 FANZA 带 Cookie」更正为 FANZA / Pixiv / Fantia；长期文档里的测试项数改为不写死；
+  变更记录里会暴露本机目录结构的路径已删除。
+
 **v0.5.5**
 
 - **打包命令修正**：文档里的 `zip` 改为在仓库根目录执行，排除项补上 `*.local.*` 与 `*/fixtures/local/*`。此前只写了 `*.local.md`，于是 `docs/forbidden-names.local.txt`（本机真实作品名清单）被打了进去——发布包一旦外传，这份清单会跟着泄露。
-- **`tools/lint-anonymity.mjs` 静默失效修复**：入口判断原本用 `file://${process.argv[1]}` 拼字符串与 `import.meta.url` 比对，而工作目录路径含空格（例如 `Codex Projects`）时两者不相等，脚本直接退出、一个文件都不扫，却依然返回成功。现改用 `pathToFileURL()`。
-- **工程目录迁移**到 `~/Documents/Codex Projects/manga`；安装说明与打包命令里的版本号、目录名同步更新（打包不再依赖目录名）。
+- **`tools/lint-anonymity.mjs` 静默失效修复**：入口判断原本用 `file://${process.argv[1]}` 拼字符串与 `import.meta.url` 比对，而工作目录路径里带空格时两者不相等，脚本直接退出、一个文件都不扫，却依然返回成功。现改用 `pathToFileURL()`。
+- **工程目录迁移**到更合适的本地目录（路径含空格，顺带验证了上面那个修复）；安装说明与打包命令里的版本号、目录名同步更新（打包不再依赖目录名）。
 - 回归测试 143 项。
 
 **v0.5.4**
@@ -456,6 +488,7 @@ extension/
 ## 15. 多商店检索（v0.2.0 已实现）
 
 需求文档 §23 把「多正版平台」列在后续版本；实际已按用户要求实现，用于判断「这部作品是不是商业作品 / 是否只在别的平台发售」。
+（本节最初的版本只覆盖三家商店，Pixiv / Fantia 的适配器是后来追加的——见上面流程图下方的说明。）
 
 ### 检索顺序与提前结束
 
@@ -465,12 +498,19 @@ DLsite（主变体 + 备用变体，必要时再查女性向索引）
 FANZA
    ↓ 还是没有
 Melonbooks
+   ↓ 还是没有
+Pixiv
+   ↓ 还是没有
+Fantia
    ↓
-仍然没有 → 卡片显示「暂未找到」，并给出三家商店的搜索入口
+仍然没有 → 卡片显示「暂未找到」，并给出各商店的搜索入口
 ```
 
 - 只要某一家给出高可信度匹配（≥85 分）就立即停止，不再打扰后面的商店
 - 结果缓存按商店分别缓存 30 分钟（无结果 5 分钟）
+- Pixiv / Fantia 是后续版本追加的适配器（v0.5.x）：顺序仍然是 `CONFIG.stores.enabled` 的配置顺序，
+  Pixiv 走 `s_mode=s_tag` 的搜索页、Fantia 走投稿搜索页；两者都依赖登录态，
+  空结果不可信（见 `docs/QA.zh-CN.md` §10.2(D)）
 
 ### 各商店实测入口与解析方式
 

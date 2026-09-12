@@ -11,7 +11,7 @@
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
 ![Tests](https://img.shields.io/badge/tests-143%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.5.5-informational)
+![Version](https://img.shields.io/badge/version-0.6.0-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 対象と免責
@@ -35,6 +35,7 @@
 - [プライバシーと権限](#プライバシーと権限)
 - [設定値（チューニング）](#設定値チューニング)
 - [開発](#開発)
+- [リアルワールド QA](#リアルワールド-qa-real-world-qa)
 - [既知の制限](#既知の制限)
 - [変更履歴](#変更履歴)
 - [今後の予定](#今後の予定)
@@ -46,7 +47,7 @@
 
 * **現在のページを読み取る** — `<title>`、`h1`–`h4`、`og:title`、JSON-LD、ギャラリーの情報ブロック（`Tags / Groups / Languages / Pages`）、本文サンプル。
 * **作品名を抽出・整形する** — サイト名、広告文、話数、`[DL版]` / `[Chinese]` などのタグを除去し、ローマ字表記や翻訳タイトルより**日本語の原題を優先**します（各ストアは日本語の商品名でインデックスされています）。
-* **正規ストアを順番に検索** — DLsite → FANZA → Melonbooks。どこか1つで高確度の一致が出たらそこで打ち切ります。
+* **正規ストアを順番に検索** — DLsite → FANZA → Melonbooks → Pixiv → Fantia（順序は `CONFIG.stores.enabled`）。どこか1つで高確度の一致が出たらそこで打ち切ります。
 * **スコアリングと段階表示** — `≥85` は「見つかりました」、`62–84` は「候補あり」（最大3件）、`<62` は**一切表示しません**。
 * **ページ上のカード**（Shadow DOM、折りたたみ / 閉じる可、レイアウトに影響しません）と、詳細・設定・キャッシュ管理ができる**ツールバーのポップアップ**。
 * **クライアントサイド遷移に対応** — リロードせずに内容が入れ替わるサイト（一部のギャラリーサイトが該当します）では、「遷移ゲート」が新ページの描画完了を待ってから読み取ります（v0.3.0 で修正した問題。→[変更履歴](#変更履歴)）。
@@ -116,13 +117,13 @@ chrome API の境界より上はすべて純粋関数なので、パイプライ
 | **FANZA**（DMM） | `https://www.dmm.co.jp/search/=/searchstr/<キーワード>/` | `/-/detail/=/cid=d_XXXXXX/` + `p.text-sm.font-bold` + `770円` + `サークル：…` | 年齢確認 Cookie が必要（下記） |
 | **Melonbooks** | `https://www.melonbooks.co.jp/search/search.php?name=<キーワード>&adult_check_flg=1` | `li.product_NNNNNNN` + `p.item-ttl.product_title` + `p.item-price` | Cookie 不要 |
 | **Pixiv** | `https://www.pixiv.net/ajax/search/artworks/<キーワード>?…&s_mode=s_tag`（JSON） | `body.illustManga.data[]` → `id` / `title` / `userName` / `xRestrict` | ブラウザの Pixiv セッションを再利用。**R-18 作品はログイン＋年齢確認をしないと検索に出ません** |
-| **Fantia** | `https://fantia.jp/api/v1/search/posts?q=<キーワード>`（JSON） | `posts[]` → `id` / `title` / `fanclub.name` | 公開 JSON API。成人向けは年齢確認が必要な場合があるためブラウザのセッションを再利用します |
+| **Fantia** | `https://fantia.jp/posts?brand_type=0&keyword=<キーワード>&stock=all&category=…` | 投稿カードの `a[href="/posts/<id>"]`（表示名は `<サークル>の投稿「<タイトル>」`）+ `/fanclubs/<id>` | 検索ページはセッションが必要（`credentials: 'include'`）。ログアウト状態では 0 件になることがあるため、**空の結果を「無い」と断定しません**（詳細は `docs/QA.zh-CN.md` §10.2(D)） |
 
 ### FANZA と年齢確認
 
 FANZA へのリクエストは `credentials: 'include'` で送信されるため、**ブラウザに既にある年齢確認の状態（`age_check_done=1`）を再利用**します。年齢確認ページが返ってきた場合、拡張機能は**「結果なし」と偽ることはせず**、そのストアを「年齢確認が必要」と表示して確認用リンクを出します。確認後に「再解析」を押してください。
 
-Cookie を伴うのは FANZA のみで、DLsite と Melonbooks は常に資格情報なしで取得します。
+Cookie を送るのは FANZA / Pixiv / Fantia（それぞれ年齢確認・ログイン状態の再利用のため）で、DLsite と Melonbooks は常に資格情報なしで取得します。
 
 ---
 
@@ -134,7 +135,7 @@ Cookie を伴うのは FANZA のみで、DLsite と Melonbooks は常に資格�
 
 ### 配布アーカイブから
 
-1. `manga-dlsite-navigator-v0.5.5.zip` をダウンロードして解凍します。
+1. `manga-dlsite-navigator-v0.6.0.zip` をダウンロードして解凍します。
 2. `chrome://extensions/` を開き、右上の**デベロッパー モード**を有効にします。
 3. **パッケージ化されていない拡張機能を読み込む** をクリックし、`manifest.json` があるフォルダを選びます。
 
@@ -164,6 +165,7 @@ git clone https://github.com/<your-account>/manga-legal-navigator.git
 | 拡張機能を有効にする | オン | マスタースイッチ。オフにすると読み取りも通信もカードも行いません。 |
 | 作品を認識したらページにカードを表示 | オン | オフにすると結果はポップアップ内のみ、または「ページに表示」を押したときだけ表示されます。 |
 | 作者 / サークル名でも検索する | オン | ページの作者・サークル名でもう一度検索します。サイトによっては（特に Pixiv）別タイトルで登録されているため、タイトル検索だけでは見つかりません。 |
+| 人民元の概算レート（1 円 = ? 元） | 空欄（内蔵 0.044） | FANZA / Melonbooks は人民元価格を出さないため、このレートで「約 X 元」を概算します。空欄なら内蔵値（Google Finance 2026-09-12 07:54: 1 JPY = 0.0437 → 0.044）。DLsite はストア自身の換算を優先します。変更は即時反映され、キャッシュ削除は不要です。 |
 | オフラインのサンプルデータを使う（デバッグ） | オフ | `src/stores/fixtures/` のサンプルスナップショットでパイプライン全体を実行します（通信なし）。 |
 | 「漫画ページかどうか」の判定をスキップ（デバッグ） | オフ | すべてのページを分析します。新しいストアアダプタの開発時に便利です。 |
 
@@ -173,7 +175,7 @@ git clone https://github.com/<your-account>/manga-legal-navigator.git
 
 ## 検証
 
-2026-09-11 に Chrome 上で、実際の同人誌ギャラリーページとストア3社に対して手作業で確認しました:
+2026-09-11 に Chrome 上で、実際の同人誌ギャラリーページに対して手作業で確認しました（当時 Pixiv / Fantia のアダプタはまだ無かったため、DLsite / FANZA / Melonbooks の3社のみ確認しています）:
 
 | 確認した項目 | 結果 |
 | --- | --- |
@@ -191,14 +193,14 @@ git clone https://github.com/<your-account>/manga-legal-navigator.git
 ## プライバシーと権限
 
 * アカウント登録なし、テレメトリなし、解析なし、自前のサーバーもありません。
-* 読み取るのは**公開ページの情報**（タイトル、見出し、`og:`/JSON-LD、ギャラリーの情報ブロック、本文サンプル）だけで、検索リクエストの送信先は**上記3ストアのみ**です。
+* 読み取るのは**公開ページの情報**（タイトル、見出し、`og:`/JSON-LD、ギャラリーの情報ブロック、本文サンプル）だけで、検索リクエストの送信先は**上記のストアのホストのみ**（DLsite / FANZA / Melonbooks / Pixiv / Fantia）です。
 * キャッシュは端末内の `chrome.storage.local` に保存されます。キャッシュキーは検索キーワードのハッシュで、**閲覧履歴は保存しません**。ポップアップからいつでも消せます。
 
 | 権限 | 用途 |
 | --- | --- |
 | `storage` | 設定と検索結果キャッシュの保存 |
 | `activeTab` | ポップアップが現在のタブを読み、状態表示と手動の再解析を行うため |
-| `host_permissions`: `dlsite.com`、`dmm.co.jp`、`melonbooks.co.jp` | 各ストアの公開検索ページの取得。content script は CORS の制約を受けるため、バックグラウンドから取得します |
+| `host_permissions`: `dlsite.com`、`dmm.co.jp`、`melonbooks.co.jp`、`pixiv.net`、`fantia.jp` | 各ストアの公開検索ページの取得。content script は CORS の制約を受けるため、バックグラウンドから取得します |
 | `http/https/file` にマッチする content script | 表示中のページを読み取るため。インストール時に Chrome が「すべてのウェブサイト上のデータの読み取りと変更」と表示しますが、ページタイトルを読む拡張機能には必ず付く警告です |
 
 **意図的に実装していないこと**: 各ストアへのログイン、パスワードの取り扱い、フォーム送信、自動購入・自動ダウンロード、アクセス制限 / DRM / CAPTCHA / 年齢確認の回避。
@@ -248,20 +250,26 @@ manga-legal-navigator/
 │   │   ├── registry.js            # ストア登録（新しいストアはここに追加）
 │   │   └── fixtures/              # サンプルスナップショット（DOM は実ページと同じ、データはプレースホルダ）
 │   ├── matching/matcher.js        # 類似度スコアと段階付け
-│   ├── lib/                       # config、テキスト処理、クリーナー、ページ判定、パイプライン、キャッシュ、設定
+│   ├── lib/                       # config、テキスト処理、クリーナー、ページ判定、パイプライン、キャッシュ、設定、通貨換算
+│   ├── qa/                        # リアルワールド QA: 構造フィンガープリント、記録、出力、匿名化
 │   ├── shared/protocol.js         # メッセージ種別と状態の列挙
 │   └── popup/                     # popup.html / popup.js / popup.css
 ├── tests/                         # Node テスト + ローカルテストページ6枚
-├── tools/probe-dlsite.mjs         # 実サイト探針: URL・ステータス・解析件数・スコアを出力
+│   └── real-world/                # リアルワールドのテストケース（構造と期待値のみ、実データなし）
+├── tools/probe-store.mjs          # 実サイト探針（--store dlsite|fanza|melonbooks|pixiv|fantia / --all / --json + ヘルス）
+├── tools/probe-dlsite.mjs         # 旧入口（probe-store --store dlsite へ転送）
+├── tools/qa-*.mjs                 # QA: テストケースの再実行 / 集計レポート / 取り込み
+├── docs/QA.zh-CN.md               # リアルワールド QA の手順書（要件書 v0.1）
 └── docs/DEVELOPMENT.zh-CN.md      # 中国語の詳細な開発・実測ノート
 ```
 
 ### テスト
 
 ```bash
-node --test tests/*.test.js      # 142 件、すべてオフライン
+node --test tests/*.test.js      # すべてオフライン（通信なし）
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 実在の商品 ID / ギャラリー ID が混入していないか検査
+node tools/qa-run.mjs            # tests/real-world/ の全ケースをオフラインで再実行
 ```
 
 範囲: タイトル整形（過剰に削らないことを確認する反例つき）、マッチングのしきい値、ページ判定、ストアのパーサ（HTML スナップショット）、パイプライン全体、カードのテンプレート、ポップアップ、そしてクライアントサイド遷移ゲート（`tests/content-nav.test.js`）。
@@ -297,17 +305,48 @@ node tools/probe-dlsite.mjs "キーワード" --raw      # 生 HTML を出力し
 
 **実ページ**でパーサを確認したい場合は、取得した HTML を `src/stores/fixtures/local/` に置いてください（gitignore 済みなので、実在の商品データがリポジトリに入ることはありません）。
 
+### リアルワールド QA（Real-world QA）
+
+要件書 v0.1 の QA / Site Discovery フェーズで、ツール一式はすでに用意されています。詳細な手順は
+[`docs/QA.zh-CN.md`](docs/QA.zh-CN.md)（中国語）にまとめてあります。
+
+```text
+ポップアップで [QA Capture] を有効化   →  テストしたいページを普通に閲覧する
+        ↓ 分析ごとに構造化された記録を 1 件書き出す（数 KB、HTML は含まない）
+ポップアップで [PASS / FAIL / LIMITATION / 誤判定] を選ぶ → 残す価値のあるページは [Create Test Case]
+        ↓
+[Export Summary] / [Export Failed Cases] / [Export Test Case Pack]
+        ↓ qa/inbox/ に置く
+node tools/qa-report.mjs     →  qa/qa-summary.json + qa/failures/FAIL-xxx.json
+node tools/qa-import.mjs     →  tests/real-world/<分類>/RW-xxx.json（リポジトリに入る・匿名）
+                                tests/sites.local.json + qa/captures/（ローカルのみ）
+node tools/qa-run.mjs        →  オフラインで再実行し、再現性を確認
+```
+
+設計上のポイント:
+
+* QA Capture は**既定でオフ**。通常のユーザーはデータを作らず、余計なリクエストも出さず、パネルも見えません（§34）。
+* 保存するのは**構造化された特徴と拡張機能自身の処理結果**だけで、HTML・画像・Cookie・本文は保存しません（§7）。
+* エクスポートは既定で**匿名化**（実在のタイトル / 商品 ID / URL はプレースホルダになり、長さ・文字種・短いハッシュだけが残ります）。実データを出す場合は明示的にチェックを入れ、git-ignored の `qa/` や `tests/sites.local.json` にだけ保存してください（§9）。
+* 1 回のテストのエクスポートは数 KB。まずローカルのスクリプトで集計し、**失敗したケースだけ**を Codex に渡します（§8、§26）。
+* 各ページには構造フィンガープリント（例: `G-H1-OG-NJ-IMG40-INFO-SPA`）と Novelty Score が付き、そのページが新しい構造を代表しているかどうかを判断できます（§10–§12）。
+
+`tests/real-world/` にはそのまま再実行できるプレースホルダのケースが 13 件入っています
+（うち 1 件は既知のクリーナー不具合、1 件は既知の制限）。最初の約 40 件の内訳と現状は
+`docs/QA.zh-CN.md` の第 8 節にあります。
+
 ### リリース用パッケージ
 
 ```bash
 # リポジトリのルートで実行。アーカイブは gitignore 済みの outputs/ に出力されます。
-zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
-  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" "outputs/*" "*.zip"
+zip -qr outputs/manga-dlsite-navigator-v0.6.0.zip . \
+  -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" \
+     "outputs/*" "*.zip" "qa/*" "tests/sites.local.json"
 ```
 
-`*.local.*` と `*/fixtures/local/*` の除外は外さないでください。ローカル専用ファイル
-（実在の作品名、手元で保存したページスナップショット）が入っており、以前はこの除外が
-狭すぎて 1 つがアーカイブに混入しました。
+`*.local.*`、`*/fixtures/local/*`、`qa/*`、`tests/sites.local.json` の除外は外さないでください。
+ローカル専用ファイル（実在の作品名、手元で保存したページスナップショット、QA のキャプチャと集計）
+が入っており、以前はこの除外が狭すぎて 1 つがアーカイブに混入しました。
 
 ---
 
@@ -329,6 +368,13 @@ zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
 ---
 
 ## 変更履歴
+
+**0.6.0**
+
+* **リアルワールド QA ツール一式**（要件書 v0.1）: 既定オフの QA Capture が、分析のたびに構造化されたページ要約（ページ種別、構造フィンガープリント、Novelty Score、抽出・整形の結果、ストアごとの結果、リクエスト数、キャッシュ命中）を記録します。HTML・画像・Cookie は保存しません。ポップアップに QA パネル（Captured / New / Pass / Fail / Limitation、PASS / FAIL / EXPECTED_LIMITATION / 誤判定、Create Test Case → RW-nnn、3 種類の匿名化エクスポート、記録のコピー、データ削除）が加わり、QA 自身の失敗も黙って隠さず表示します。権限は増えていません。
+* **新しいツール**: `tools/probe-store.mjs`（ストアごとの探針 + アダプタのヘルス）、`tools/qa-run.mjs`（`tests/real-world/` のオフライン再実行）、`tools/qa-report.mjs`（`qa/qa-summary.json` と `qa/failures/FAIL-xxx.json` を生成）、`tools/qa-import.mjs`（ケースの取り込み）。`tests/real-world/` にはプレースホルダのケースが 13 件入り、うち 1 件（RW-014）は既知のサイト判定の穴を記録しています。実在の URL とタイトルは git-ignored のパス（`/qa/`、`tests/sites.local.json`）にだけ保存されます。
+* **人民元の概算レートを一本化**: FANZA / Melonbooks はアダプタ内に `0.044` / `0.05` を直接書いていましたが、`CONFIG.currency.jpyToCny`（既定 **0.044**、Google Finance 2026-09-12 07:54 の 1 JPY = 0.0437 を四捨五入）を参照するようになり、ポップアップの設定から入力できます（空欄なら内蔵値）。DLsite はストア自身の人民元価格を優先します。換算はカード生成時に行うため、レート変更は即時反映され、キャッシュ削除は不要です。無料の商品が「約 1 元」になる問題も直しました。
+* **ドキュメントを実装に合わせて修正**: 今後の予定にバージョン番号を付けない（バージョンはリリース済みの事実にだけ付けます）、ストア一覧と `host_permissions` を 5 ストアに補完、「Cookie を送るのは FANZA のみ」を FANZA / Pixiv / Fantia に訂正、長期ドキュメントから陳腐化しやすいテスト件数を削除、変更履歴から端末固有のディレクトリパスを削除。
 
 **0.5.5**
 

@@ -11,7 +11,7 @@ If the match is not convincing, it says **“no matching product found”** and 
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
 ![Tests](https://img.shields.io/badge/tests-143%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.5.5-informational)
+![Version](https://img.shields.io/badge/version-0.6.0-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### Scope and disclaimer
@@ -46,7 +46,7 @@ If the match is not convincing, it says **“no matching product found”** and 
 
 * **Reads the current page** — `<title>`, `h1`–`h4`, `og:title`, JSON-LD, the gallery info block (`Tags / Groups / Languages / Pages`) and a text sample.
 * **Extracts and cleans the work title** — strips site names, ad text, chapter numbers, `[DL版]` / `[Chinese]` style tags, and prefers the **Japanese original** over romanised or translated titles (the shops index Japanese product names).
-* **Searches official shops in order** — DLsite → FANZA → Melonbooks; it stops as soon as one store gives a high-confidence hit.
+* **Searches official shops in order** — DLsite → FANZA → Melonbooks → Pixiv → Fantia (see `CONFIG.stores.enabled`); it stops as soon as one store gives a high-confidence hit.
 * **Scores and grades the result** — `≥85` *found*, `62–84` *possible* (with up to 3 candidates), `<62` *not shown at all*.
 * **Shows a floating card** on the page (Shadow DOM, collapsible / dismissible, does not affect the site's layout) plus a **toolbar popup** with details, settings and cache controls.
 * **Survives client-side navigation** — on sites that swap content without reloading the page (some gallery sites do this), a *navigation gate* waits for the new page to actually render before it reads anything (that is what v0.3.0 fixed; see [Changelog](#changelog)).
@@ -134,7 +134,7 @@ Only FANZA requests carry cookies; DLsite and Melonbooks are always fetched with
 
 ### From a release archive
 
-1. Download and unzip `manga-dlsite-navigator-v0.5.5.zip`.
+1. Download and unzip `manga-dlsite-navigator-v0.6.0.zip`.
 2. Open `chrome://extensions/` and turn on **Developer mode** (top-right).
 3. Click **Load unpacked** and select the folder that contains `manifest.json`.
 
@@ -174,7 +174,7 @@ The popup also shows how many cached searches are stored and has a **Clear searc
 
 ## Verification
 
-Checked by hand in Chrome on 2026-09-11 against live doujinshi gallery pages and all three stores:
+Checked by hand in Chrome on 2026-09-11 against live doujinshi gallery pages (the Pixiv / Fantia adapters did not exist yet, so only DLsite / FANZA / Melonbooks were checked):
 
 | What was checked | Outcome |
 | --- | --- |
@@ -192,14 +192,14 @@ Checked by hand in Chrome on 2026-09-11 against live doujinshi gallery pages and
 ## Privacy and permissions
 
 * No account, no telemetry, no analytics, no server of any kind.
-* The extension reads **public page data only** (title, headings, `og:`/JSON-LD, gallery info block, a text sample) and sends search queries **only** to the three stores above.
+* The extension reads **public page data only** (title, headings, `og:`/JSON-LD, gallery info block, a text sample) and sends search queries **only** to the store hosts listed above (DLsite / FANZA / Melonbooks / Pixiv / Fantia).
 * Cached results live in `chrome.storage.local` on your machine. Cache keys are hashes of the search keyword; **no browsing history is stored**. The popup can clear the cache.
 
 | Permission | Why it is needed |
 | --- | --- |
 | `storage` | save settings and the search-result cache |
 | `activeTab` | the popup reads the current tab to show its status and to re-analyse on demand |
-| `host_permissions` for `dlsite.com`, `dmm.co.jp`, `melonbooks.co.jp` | fetching public search pages; content scripts cannot do this cross-origin, so the background does it |
+| `host_permissions` for `dlsite.com`, `dmm.co.jp`, `melonbooks.co.jp`, `pixiv.net`, `fantia.jp` | fetching public search pages; content scripts cannot do this cross-origin, so the background does it |
 | content script on `http/https/file` | reading the page you are looking at. Chrome will show “Read and change all your data on all websites” — this is inherent to any extension that reads page titles. |
 
 **Deliberately not implemented:** logging into any store, handling passwords, submitting forms, automatic purchases or downloads, and bypassing access restrictions, DRM, captchas or age gates.
@@ -231,7 +231,7 @@ All thresholds and timings live in [`src/lib/config.js`](src/lib/config.js):
 
 ```
 manga-legal-navigator/
-├── manifest.json                  # MV3: minimal permissions + 3 store hosts
+├── manifest.json                  # MV3: minimal permissions + store hosts
 ├── package.json                   # only used so Node runs the tests as ESM
 ├── icons/                         # 16 / 32 / 48 / 128 px
 ├── src/
@@ -265,7 +265,7 @@ manga-legal-navigator/
 ### Tests
 
 ```bash
-node --test tests/*.test.js      # 183 tests, no network required
+node --test tests/*.test.js      # offline only, no network required
 npm test                         # same thing
 node tools/lint-anonymity.mjs    # fails if a real store/gallery identifier slipped in
 node tools/qa-run.mjs            # replays every case in tests/real-world/, offline
@@ -351,7 +351,7 @@ one known limitation); the ~40-case budget for the first real batch is tracked i
 
 ```bash
 # Run from the repository root; the archive lands in outputs/ (git-ignored).
-zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
+zip -qr outputs/manga-dlsite-navigator-v0.6.0.zip . \
   -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" \
      "outputs/*" "*.zip" "qa/*" "tests/sites.local.json"
 ```
@@ -382,7 +382,7 @@ earlier, narrower pattern let one of them into the archive.
 
 ## Changelog
 
-**Unreleased (real-world QA phase, requirements doc v0.1)**
+**0.6.0**
 
 * **QA Capture mode** (bottom of the popup, off by default): while you browse, each analysis writes one structured page summary — page type, structure fingerprint, headings, og / JSON-LD, image count, info-block fields, SPA flag, extraction and cleaning results, store status, request count, cache hit, match score. No HTML, images, cookies or page body.
 * **Fingerprint + novelty score** (`G-H1-OG-NJ-IMG40-INFO-SPA`) answer “is this page a new structure?”, and the category decides which `tests/real-world/` directory a case belongs to.
@@ -392,6 +392,7 @@ earlier, narrower pattern let one of them into the archive.
 * **Generalised probe**: `tools/probe-store.mjs` supports `--store dlsite|fanza|melonbooks|pixiv|fantia`, `--all` and `--json`, and reports adapter health (healthy / degraded / blocked / parser-broken / search-failed / no-result); `tools/probe-dlsite.mjs` stays as a compatible entry point.
 * **13 placeholder cases committed** (structure + expectation, replayable offline); the phase target is ~40. This phase records problems and does not touch the matching algorithm.
 * **The CNY estimate now has one source of truth**: FANZA / Melonbooks used to hard-code `0.044` / `0.05`; they now read `CONFIG.currency.jpyToCny` (default **0.044**, from Google Finance 2026-09-12 07:54: 1 JPY = 0.0437 CNY, rounded) and the rate can be entered in the popup settings. DLsite keeps the store's own CNY price. The conversion moved to card-building time, so a rate change applies immediately without clearing the cache, and free items no longer show “约 1 元”.
+* **Docs realigned with the code**: future-work items no longer carry version numbers (a version marks a released fact, not a plan), the store and `host_permissions` lists now name all five stores, the “only FANZA sends cookies” note became FANZA / Pixiv / Fantia, hard-to-maintain test counts were dropped from the long-lived docs, and a machine-specific path was removed from the changelog.
 
 **0.5.5**
 
@@ -420,7 +421,7 @@ earlier, narrower pattern let one of them into the archive.
   * While the page is settling, page-info requests wait for the new content instead of answering with the old one, and the previous card is removed immediately.
   * New `settled` signal: when `og:url` / `canonical` disagree with the address bar, the page is treated as “still switching” and is never searched.
   * States now carry the id of the document that produced them (`page.scriptId`); the popup reuses a cached state only for the same document, and the background only stores a state if the tab is still on that URL.
-* Verified by hand against live pages (see [Verification](#verification)) and covered by the offline test suite (183 tests at the time of writing).
+* Verified by hand against live pages (see [Verification](#verification)) and covered by the offline test suite.
 
 **0.2.2** — site root / listing pages are no longer analysed; navigation-bar text no longer counts as a “work page” signal.
 

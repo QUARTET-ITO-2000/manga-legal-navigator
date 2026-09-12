@@ -11,7 +11,7 @@
 ![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)
 ![Chrome](https://img.shields.io/badge/Chrome-102%2B-4285F4)
 ![Tests](https://img.shields.io/badge/tests-143%20passing-2ea44f)
-![Version](https://img.shields.io/badge/version-0.5.5-informational)
+![Version](https://img.shields.io/badge/version-0.6.0-informational)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 > ### 适用范围与声明
@@ -45,8 +45,8 @@
 ## 它做什么
 
 * **读取当前页面**：`<title>`、`h1`–`h4`、`og:title`、JSON-LD、画廊信息块（`Tags / Groups / Languages / Pages`）以及正文采样。
-* **提取并清洗作品名**：去掉网站名、广告语、章节号、`[DL版]` / `[Chinese]` 这类标签，并在日文原名、罗马音、译名之间**优先选择日文原名**（三家商店的商品名基本都是日文）。
-* **按顺序检索正版商店**：DLsite → FANZA → Melonbooks，任何一家给出高可信度匹配就立即停止。
+* **提取并清洗作品名**：去掉网站名、广告语、章节号、`[DL版]` / `[Chinese]` 这类标签，并在日文原名、罗马音、译名之间**优先选择日文原名**（商店的商品名基本都是日文）。
+* **按顺序检索正版商店**：DLsite → FANZA → Melonbooks → Pixiv → Fantia（顺序见 `CONFIG.stores.enabled`），任何一家给出高可信度匹配就立即停止。
 * **打分并分级**：`≥85` 判定为「找到正版」；`62–84` 判定为「可能的正版」（最多列 3 个候选）；`<62` **完全不展示**。
 * **在页面上显示浮窗**（Shadow DOM，可收起 / 可关闭，不参与页面布局），同时提供 **Popup**：识别详情、设置、缓存管理。
 * **能应对站内跳转**：对于不刷新页面就换内容的站点（部分画廊站属于这一类），有「换页闸门」——等新页面真正渲染出来再读取（这正是 v0.3.0 修复的问题，见[变更记录](#变更记录)）。
@@ -134,7 +134,7 @@ FANZA 的请求使用 `credentials: 'include'`，即**复用浏览器里已有�
 
 ### 用发布包安装
 
-1. 下载并解压 `manga-dlsite-navigator-v0.5.5.zip`。
+1. 下载并解压 `manga-dlsite-navigator-v0.6.0.zip`。
 2. 打开 `chrome://extensions/`，打开右上角的**开发者模式**。
 3. 点击**加载已解压的扩展程序**，选择包含 `manifest.json` 的那一层目录。
 
@@ -174,7 +174,7 @@ Popup 里还会显示当前缓存了多少条搜索结果，并提供**清除搜
 
 ## 验证
 
-2026-09-11 在 Chrome 上对着真实的同人志画廊页面与三家商店手工验证：
+2026-09-11 在 Chrome 上对着真实的同人志画廊页面手工验证（当时还没有 Pixiv / Fantia 适配器，所以只核对了三家商店 DLsite / FANZA / Melonbooks）：
 
 | 验证项 | 结果 |
 | --- | --- |
@@ -192,14 +192,14 @@ Popup 里还会显示当前缓存了多少条搜索结果，并提供**清除搜
 ## 隐私与权限
 
 * 没有账号体系、没有统计埋点、没有分析服务、没有任何自建服务器。
-* 只读取**公开页面信息**（标题、各级标题、`og:`/JSON-LD、画廊信息块、正文采样），并且**只向上面三家商店**发起搜索请求。
+* 只读取**公开页面信息**（标题、各级标题、`og:`/JSON-LD、画廊信息块、正文采样），并且**只向上面列出的商店域名**（DLsite / FANZA / Melonbooks / Pixiv / Fantia）发起搜索请求。
 * 缓存保存在本机 `chrome.storage.local`；缓存键是搜索关键词的散列，**不记录你访问过哪些网页**，Popup 可一键清除。
 
 | 权限 | 用途 |
 | --- | --- |
 | `storage` | 保存设置与搜索结果缓存 |
 | `activeTab` | Popup 读取当前标签页，用于展示状态与手动重新识别 |
-| `host_permissions`：`dlsite.com`、`dmm.co.jp`、`melonbooks.co.jp` | 抓取三家商店的公开搜索页；content script 受 CORS 限制，必须由后台发起 |
+| `host_permissions`：`dlsite.com`、`dmm.co.jp`、`melonbooks.co.jp`、`pixiv.net`、`fantia.jp` | 抓取这几家商店的公开搜索页；content script 受 CORS 限制，必须由后台发起 |
 | content script 匹配 `http/https/file` | 读取你正在看的页面。安装时 Chrome 会提示「读取和更改您在所有网站上的数据」——任何读取页面标题的扩展都会有这条提示。 |
 
 **明确不做**：登录任何商店、处理密码、提交表单、自动购买或下载、绕过访问限制 / DRM / 验证码 / 年龄确认。
@@ -231,7 +231,7 @@ Popup 里还会显示当前缓存了多少条搜索结果，并提供**清除搜
 
 ```
 manga-legal-navigator/
-├── manifest.json                  # MV3：最小权限 + 三家商店域名
+├── manifest.json                  # MV3：最小权限 + 商店域名
 ├── package.json                   # 只是为了让 Node 以 ESM 运行测试
 ├── icons/                         # 16 / 32 / 48 / 128 图标
 ├── src/
@@ -265,7 +265,7 @@ manga-legal-navigator/
 ### 测试
 
 ```bash
-node --test tests/*.test.js      # 183 项，全部离线
+node --test tests/*.test.js      # 全部离线，不发网络请求（项数跑一次就知道）
 npm test                         # 同上
 node tools/lint-anonymity.mjs    # 检查仓库里是否混进了真实商品号 / 画廊号
 node tools/qa-run.mjs            # 离线重放 tests/real-world/ 全部真实案例
@@ -344,7 +344,7 @@ node tools/qa-run.mjs        →  离线重放，验证可重复执行
 
 ```bash
 # 在仓库根目录执行；压缩包输出到已被 gitignore 的 outputs/
-zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
+zip -qr outputs/manga-dlsite-navigator-v0.6.0.zip . \
   -x ".git/*" ".DS_Store" "*/.DS_Store" "*/node_modules/*" "*.local.*" "*/fixtures/local/*" \
      "outputs/*" "*.zip" "qa/*" "tests/sites.local.json"
 ```
@@ -374,7 +374,7 @@ zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
 
 ## 变更记录
 
-**未发布（Real-world QA 阶段，需求书 v0.1）**
+**0.6.0**
 
 * **新增 QA Capture 模式**（Popup 最下方，默认关闭）：正常浏览页面即自动记录结构化页面摘要
   （页面类型、结构指纹、标题元素、og / JSON-LD、图片数、信息块字段、SPA、提取与清洗结果、
@@ -399,6 +399,10 @@ zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
   2026-09-12 07:54：1 JPY = 0.0437 CNY 四舍五入），并可在 Popup 设置里自行录入；
   DLsite 仍然优先使用商店自己给出的人民币价格。换算挪到「生成卡片」阶段，
   改汇率立即生效、无需清缓存，免费商品也不会再显示「约 1 元」。
+* **文档与实现对齐**：后续方向条目不再挂版本号（版本号只标记已发布的事实）；
+  商店清单与 `host_permissions` 补全为 5 家；「只有 FANZA 请求带 Cookie」更正为
+  FANZA / Pixiv / Fantia；测试项数这类容易过期的数字从长期文档里移除；
+  变更记录里一处会暴露本机目录结构的路径已删掉。
 
 **0.5.5**
 
@@ -427,7 +431,7 @@ zip -qr outputs/manga-dlsite-navigator-v0.5.5.zip . \
   * 换页期间，页面信息请求会等新内容就绪再回答，不会再拿旧内容应付；旧卡片同时立即移除。
   * 新增 `settled` 信号：`og:url` / `canonical` 与地址栏不一致时，按「还没换好」处理，绝不拿去搜索。
   * 状态里记录产生它的文档编号（`page.scriptId`）：只有同一份文档才复用缓存；后台也只在标签页仍停在原地址时才写入状态。
-* 已按上表在真机验证，回归测试 142 项。
+* 已按上表在真机验证。
 
 **0.2.2** — 站点根路径 / 列表页不再分析；导航栏文案不再被当成「作品页」信号。
 
